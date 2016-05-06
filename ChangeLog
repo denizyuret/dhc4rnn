@@ -1,0 +1,609 @@
+2016-05-06  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* ego2:
+	julia> setseed(42);scale!(0.01,randn!(x0));ego2(weval,x0;stepsize=100.0,l2=0.0)
+	(2,:f0,2.3035567f0,:cos,8.23040958493948e-6,:n0,0.08114025652408599,:n1,7.421767077175901e-7,:nr,0.00044803944681581114,:savg,0.505,:err,0.91775,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(3,:f0,2.3035567f0,:cos,4.847555109299719e-5,:n0,0.08114030727148056,:n1,3.8100792888144497e-6,:nr,0.000680352603941672,:savg,0.49995,:err,0.9176833333333333,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(4,:f0,2.3035507f0,:cos,9.199025983316824e-5,:n0,0.0811422987601757,:n1,6.3326417657590355e-6,:nr,0.001108982502911506,:savg,0.5049505,:err,0.9188166666666666,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(8,:f0,2.3033557f0,:cos,0.0004299686837054049,:n0,0.08116281441762464,:n1,3.570774201180588e-5,:nr,0.00455392965078471,:savg,0.5244574255475051,:err,0.9133833333333333,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(16,:f0,2.302817f0,:cos,0.0013751379268964641,:n0,0.0814472972750434,:n1,9.868624923325546e-5,:nr,0.013095557500291309,:savg,0.5611956124493661,:err,0.9105166666666666,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(32,:f0,2.2953317f0,:cos,0.003911312686450101,:n0,0.08704336209827866,:n1,0.0004029525626445268,:nr,0.05430652362869281,:savg,0.6263765942294856,:err,0.8984333333333333,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(64,:f0,2.231139f0,:cos,0.006514517922062195,:n0,0.17152920950359135,:n1,0.0015657773515674067,:nr,0.21984506960511305,:savg,0.7291303777627752,:err,0.8543,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(128,:f0,1.9665089f0,:cos,0.006941581996023616,:n0,0.48114294100590227,:n1,0.004017896087303262,:nr,0.570488225761404,:savg,0.76928906933905,:err,0.7045,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(256,:f0,1.5963154f0,:cos,0.006335431226541054,:n0,0.7942423840965551,:n1,0.0054646254582376985,:nr,0.7759003881452908,:savg,0.8100265674254274,:err,0.5261333333333333,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(512,:f0,1.1487703f0,:cos,0.005260583540359751,:n0,0.7177956906605666,:n1,0.004529029035248935,:nr,0.6419369814476216,:savg,0.7977283714895305,:err,0.366,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(1024,:f0,0.8270871f0,:cos,0.0054961700593857245,:n0,0.44811056954709133,:n1,0.0026939819397054435,:nr,0.3821731901556118,:savg,0.7631453728091798,:err,0.26303333333333334,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(2048,:f0,0.574096f0,:cos,0.005271737098117086,:n0,0.2100163953202183,:n1,0.001245148453907959,:nr,0.17660672165944322,:savg,0.8519336039730712,:err,0.17613333333333334,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(4096,:f0,0.41038758f0,:cos,0.0067714895565903176,:n0,0.10093985535180747,:n1,0.0007738109407349217,:nr,0.1095490230324985,:savg,0.8683419466229609,:err,0.12325,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(8192,:f0,0.30861074f0,:cos,0.008024264103711782,:n0,0.055512211059949565,:n1,0.00046163428990276677,:nr,0.06547421707582864,:savg,0.9033756975130316,:err,0.09101666666666666,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(16384,:f0,0.21601301f0,:cos,0.009161937891490364,:n0,0.03609337447503226,:n1,0.0003219355600435441,:nr,0.04624239836202402,:savg,0.9263339669650051,:err,0.06328333333333333,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(32768,:f0,0.13451548f0,:cos,0.010608786439488703,:n0,0.01868676751684694,:n1,0.00018958614440376206,:nr,0.030255859858781216,:savg,0.9255765948912659,:err,0.039233333333333335,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(65536,:f0,0.070505075f0,:cos,0.009396499563214923,:n0,0.009770846618583257,:n1,0.0001146027412401719,:nr,0.02536107039373486,:savg,0.8310354138508609,:err,0.0202,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	(85851,:f0,0.04999875f0,:cos,0.012145449059559783,:n0,0.0076114243836385475,:n1,0.00010094881803451272,:nr,0.024752193858739415,:savg,0.7994535464134945,:err,0.013966666666666667,:lr,1.0,:l2,0.0,:stepsize,100.0,:noise,1.0)
+	0.04999875f0
+
+
+	* gradest4: normalizing step size with 1/(nr*nr) is known as the
+	NLMS algorithm (wikipedia) and solves the magnitude problem.  The
+	norm of the gradient estimate no longer depends on step size.  The
+	learning rate linearly effects estimate size but not direction.
+	If g0 is the real gradient, g1 the estimate, n0 and n1 their
+	norms, n1/n0 follows close to cos(g0,g1), which means g1 is a
+	projection of g0 on a growing subspace, with little wasted
+	components?  If g0 is randn(), with norm sqrt(n), and gk has k
+	random components of g0, it would have norm sqrt(k), and
+	cos(g0,gk) = |gk|/|g0| = sqrt(k/n).  For example at k=1024,
+	n=50816, expected cosine=0.1420, actual cosine=0.1420
+
+	julia> setseed(42);scale!(0.01,randn!(x0));gradest4(weval,x0;nsample=50000)
+	CUBLAS.dot(x0,g0) / (n0 * nx) = 0.010890127f0
+	(1,:cos,0.004217522f0,:n1n0,0.004304496f0,:f2f1,-7.867813f-6,:f1f0,7.867813f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.0003492677f0,:nr,0.022526596f0)
+	(2,:cos,0.004538363f0,:n1n0,0.0046224445f0,:f2f1,-3.0994415f-6,:f1f0,3.0994415f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.0003750661f0,:nr,0.02254933f0)
+	(4,:cos,0.009024053f0,:n1n0,0.009014419f0,:f2f1,1.66893f-6,:f1f0,-1.66893f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.0007314318f0,:nr,0.022576766f0)
+	(8,:cos,0.010427194f0,:n1n0,0.010429594f0,:f2f1,8.34465f-6,:f1f0,-8.106232f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.00084625935f0,:nr,0.02244643f0)
+	(16,:cos,0.015688948f0,:n1n0,0.015607995f0,:f2f1,-2.3841858f-6,:f1f0,2.3841858f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.001266436f0,:nr,0.022549475f0)
+	(32,:cos,0.021131232f0,:n1n0,0.021021424f0,:f2f1,6.198883f-6,:f1f0,-5.9604645f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.0017056826f0,:nr,0.022460667f0)
+	(64,:cos,0.03004172f0,:n1n0,0.029976744f0,:f2f1,-1.1920929f-6,:f1f0,1.1920929f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.002432319f0,:nr,0.022494247f0)
+	(128,:cos,0.044423975f0,:n1n0,0.044390954f0,:f2f1,-5.9604645f-6,:f1f0,6.198883f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.003601891f0,:nr,0.022520944f0)
+	(256,:cos,0.06451531f0,:n1n0,0.06455624f0,:f2f1,-1.66893f-6,:f1f0,2.1457672f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.0052381065f0,:nr,0.022586972f0)
+	(512,:cos,0.09636592f0,:n1n0,0.096603654f0,:f2f1,9.536743f-6,:f1f0,-8.34465f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.00783844f0,:nr,0.02252173f0)
+	(1024,:cos,0.14204766f0,:n1n0,0.14242971f0,:f2f1,5.9604645f-6,:f1f0,-5.2452087f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.011556775f0,:nr,0.022577444f0)
+	(2048,:cos,0.19841959f0,:n1n0,0.19838937f0,:f2f1,4.2915344f-6,:f1f0,-5.722046f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.016097354f0,:nr,0.02253923f0)
+	(4096,:cos,0.27730092f0,:n1n0,0.2768458f0,:f2f1,-2.3841858f-7,:f1f0,3.0994415f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.022463327f0,:nr,0.02243287f0)
+	(8192,:cos,0.38722068f0,:n1n0,0.3871416f0,:f2f1,-5.722046f-6,:f1f0,8.34465f-6,:f0,2.3035583f0,:n0,0.081140205f0,:n1,0.031412747f0,:nr,0.022533957f0)
+
+2016-05-05  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* gradest4: Just estimating the gradient using online updates.  lr
+	has no effect on cosine.  l2 has negative effect.  rscale<=0.0001
+	works best.  Performs well compared to other gradest versions.  In
+	particular gradest1, which fit a plane and got cos=0.03 right off
+	the bat, was actually taking advantage of the fact that
+	Gaussian(0.1) initialization gives weight vectors that
+	consistently have positive dot product with the gradient.
+	Gaussian(0.01) kills that and gives a more fair comparison.
+
+	The size estimate is bad, and gets smaller with smaller rscale,
+	why?  This should give us the magnitude of the change, why can't
+	we fit this right?  Why does it depend on step size?
+
+2016-04-29  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* model05.jl: steps to figuring out dhc1
+	+ gd with fixed lr, how fast, what is the success rate?
+	+ gd with adaptive step size
+	- what is the best gradient estimation method? (rmsd)
+	1. fit f(x) to all points
+	2. fit df(x) to all pairs
+	3. fit df(x) to vectors from best point to neighbors
+	- gd with added noise, how much noise can we get away with?
+	- how stable is the gradient among neighbors (how constant is the hessian)?
+	- how do we estimate the hessian?
+	- in theory how fast is dhc0, dhc1, dhc2 for quadratics?
+
+	* q1: gd with fixed lr, how fast, what is the success rate?
+
+	learning rate: gscale=1.5 ideal, gscale=1.6 unstable, gscale=1.4
+	slower.  why should the ideal step size be proportional to gnorm?
+	does this mean the curvature is roughly constant? yes, but let's
+	confirm that in experiment 2.  The success rate dips down briefly
+	between epochs 64-256 but quickly comes back up to 1.0.  About
+	1000 steps is sufficient for the 64 hidden version.  Note that
+	since gd0 has a fixed learning rate, it has to take every step
+	whether successful or not.
+
+	julia> gd0(wgrad, w64; gscale=1.5, ftol=0.05)
+	(2,:f0,2.2206528f0,:gscale,1.5,:savg,1.0,:gavg,1.2280659437179566,:err,0.6711833333333334)
+	(3,:f0,1.7320477f0,:gscale,1.5,:savg,1.0,:gavg,1.166751893758774,:err,0.5183666666666666)
+	(4,:f0,1.3911424f0,:gscale,1.5,:savg,1.0,:gavg,1.1511213234663011,:err,0.4463)
+	(8,:f0,1.2572625f0,:gscale,1.5,:savg,0.9271,:gavg,1.1804892698243024,:err,0.40363333333333334)
+	(16,:f0,0.8883788f0,:gscale,1.5,:savg,0.8285699403910001,:gavg,1.164657183297226,:err,0.27011666666666667)
+	(32,:f0,0.53560704f0,:gscale,1.5,:savg,0.7178424921185939,:gavg,0.7848852944334285,:err,0.18226666666666666)
+	(64,:f0,0.26866767f0,:gscale,1.5,:savg,0.8600184077427794,:gavg,0.2512636427037586,:err,0.0794)
+	(128,:f0,0.18590032f0,:gscale,1.5,:savg,0.8640730817584135,:gavg,0.13914840193080738,:err,0.055016666666666665)
+	(256,:f0,0.12576553f0,:gscale,1.5,:savg,0.9998912247050362,:gavg,0.01603415283920168,:err,0.03718333333333333)
+	(512,:f0,0.08042403f0,:gscale,1.5,:savg,0.9999999999999994,:gavg,0.03321178005418734,:err,0.022866666666666667)
+	(926,:f0,0.04995603f0,:gscale,1.5,:savg,0.9999999999999994,:gavg,0.012762190137603404,:err,0.013383333333333334)
+	0.04995603f0
+
+	gscale=1.6 gets unstable at the very end:
+	julia> include("model05.jl"); gd0(wgrad, w64; gscale=1.6)
+	(128,:f0,0.21923265f0,:gscale,1.6,:savg,0.9267978143439616,:gavg,0.13046141437353462,:err,0.0661)
+	(256,:f0,0.15389258f0,:gscale,1.6,:savg,0.9991437403286251,:gavg,0.030322584024275324,:err,0.046)
+	(512,:f0,0.115107566f0,:gscale,1.6,:savg,0.999974916999761,:gavg,0.009539642588525675,:err,0.034216666666666666)
+	(1024,:f0,0.19107334f0,:gscale,1.6,:savg,0.47041258715194373,:gavg,0.09757537928967885,:err,0.05806666666666667)
+	(2048,:f0,0.17061107f0,:gscale,1.6,:savg,0.9957290027784701,:gavg,0.01792380298795345,:err,0.049633333333333335)
+	(4096,:f0,0.13577582f0,:gscale,1.6,:savg,0.9997997310277702,:gavg,0.008153113575948969,:err,0.039233333333333335)
+
+	gscale=1.8 goes unstable does not converge:
+	julia> include("model05.jl"); gd0(wgrad, w64; gscale=1.8)
+	(128,:f0,1.2179476f0,:gscale,1.8,:savg,0.475051120078614,:gavg,0.6440524907243861,:err,0.4713833333333333)
+	(256,:f0,1.854508f0,:gscale,1.8,:savg,0.8664285857771906,:gavg,0.1504832254024201,:err,0.7938333333333333)
+	(512,:f0,1.8552086f0,:gscale,1.8,:savg,0.5694900525910769,:gavg,0.4431783920929576,:err,0.7892666666666667)
+	(1024,:f0,1.6252993f0,:gscale,1.8,:savg,0.7328108045420737,:gavg,0.2783964426115891,:err,0.69715)
+	(2048,:f0,1.8474685f0,:gscale,1.8,:savg,0.5531691984786011,:gavg,0.2278383149452984,:err,0.7912833333333333)
+
+	Ideal step size in 1D=f'/f''.  Ideal step size in direction u in
+	multi-D: (ug)/(uHu)?  Do we need normalization?  Ideal step size
+	in the gradient direction: (gg)/(gHg)?
+
+	* q2: gd1 with adaptive learning rate.  Is the adaptive learning
+	rate roughly constant?  Yes, it ranges between 0.5 and 1.5.
+	Interestingly this is slower than the fixed learning rate of 1.5.
+
+	julia> include("model05.jl"); gd1(wtest, wgrad, w64)
+	(2,:f0,2.3343577f0,:lravg,1.1,:gnorm,1.2582472801208495,:err,0.6478166666666667)
+	(3,:f0,1.9644979f0,:lravg,1.272842712474619,:gnorm,1.2531917786598203,:err,0.63975)
+	(4,:f0,1.722377f0,:lravg,1.3455584412271575,:gnorm,1.2793985393047334,:err,0.59665)
+	(8,:f0,1.4773237f0,:lravg,1.3379170619861371,:gnorm,1.3063883081214671,:err,0.43485)
+	(16,:f0,0.6039938f0,:lravg,1.1604434959298946,:gnorm,0.9869027757964632,:err,0.1935)
+	(32,:f0,0.41407067f0,:lravg,0.7076627115596225,:gnorm,0.3963038683738783,:err,0.1213)
+	(64,:f0,0.32822388f0,:lravg,0.5621588173136264,:gnorm,0.14472006991559752,:err,0.09505)
+	(128,:f0,0.26138568f0,:lravg,0.5941415259698146,:gnorm,0.09332903014968606,:err,0.07521666666666667)
+	(256,:f0,0.19905983f0,:lravg,0.6315112051222899,:gnorm,0.05885158884836676,:err,0.057683333333333336)
+	(512,:f0,0.14035413f0,:lravg,0.707061535011903,:gnorm,0.0844180533998334,:err,0.040433333333333335)
+	(1024,:f0,0.08675204f0,:lravg,0.8084352250943045,:gnorm,0.022174637653984648,:err,0.024416666666666666)
+	(1927,:f0,0.049986012f0,:lravg,0.798152766826109,:gnorm,0.013080193768830297,:err,0.01335)
+	0.049986012f0
+
+	* q3: what is the best gradient estimation method? (rmsd)
+
+	* mldivide: X=A\B => AX=B, X=B/A => XA=B
+	So in gradest0 we have xdiff(X,N), fdiff(1,N), fgrad(X,1)
+	So either
+	xdiff(N,X) * fgrad(X,1) = fdiff(N,1) => fgrad(X,1) = xdiff(N,X) \ fdiff(N,1)
+	fgrad(1,X) * xdiff(X,N) = fdiff(1,N) => fgrad(1,X) = fdiff(1,N) / xdiff(X,N)
+
+	* gradest0: Use differences to a central point. rscale=0.05, nkeep=5
+	gradest0(weval, copy(w64); nkeep=nkeep, rscale=rscale)
+	(:nkeep,5,:rscale,0.5,:cos,0.006307065f0,:n0,1.2347615f0,:n1,0.20065743f0)
+	(:nkeep,5,:rscale,0.05,:cos,0.008286435f0,:n0,1.2347615f0,:n1,0.020750558f0)
+	(:nkeep,5,:rscale,0.005,:cos,0.009162536f0,:n0,1.2347615f0,:n1,0.01193146f0)
+	(:nkeep,5,:rscale,0.0005,:cos,0.009177147f0,:n0,1.2347615f0,:n1,0.011397805f0)
+
+	(:nkeep,5,:rscale,0.005,:cos,0.009162536f0,:n0,1.2347615f0,:n1,0.01193146f0)
+	(:nkeep,50,:rscale,0.005,:cos,0.030758942f0,:n0,1.2347615f0,:n1,0.03794886f0)
+	(:nkeep,500,:rscale,0.005,:cos,0.09436769f0,:n0,1.2347615f0,:n1,0.11724116f0)
+
+	note that 2016-03-24 says cosine between gradient and ideal direction is ~0.01.
+	5 samples is enough for that kind of precision.
+	need to figure out the reason and correct for the magnitude underestimate.
+	:(undersampling of directions?)
+	or ignore the magnitude and use adaptive step size.
+	we have 50816 dimensions.
+	incidentally the rscale used for dhc0 starts at 0.05 and drops to 0.0005.
+	the vecnorm(randn!(r))=225 so the step sizes go from 11 to 0.11.
+	in gd0, the lr=1.5 and gnorm goes from 1 to 0.01.
+	so the step sizes go from 1.5 to 0.015, about 10 times smaller.
+
+	* gradest1: fit a plane to all points.  seems to give better results.
+	(:nkeep,5,:rscale,0.5,:cos,0.021027377f0,:n0,1.2347615f0,:n1,0.23034568f0)
+	(:nkeep,5,:rscale,0.05,:cos,0.038427047f0,:n0,1.2347615f0,:n1,0.11778602f0)
+	(:nkeep,5,:rscale,0.005,:cos,0.038118202f0,:n0,1.2347615f0,:n1,0.11662225f0)
+	(:nkeep,5,:rscale,0.0005,:cos,0.037627656f0,:n0,1.2347615f0,:n1,0.11618393f0)
+
+	(:nkeep,5,:rscale,0.005,:cos,0.038118202f0,:n0,1.2347615f0,:n1,0.11662225f0)
+	(:nkeep,50,:rscale,0.005,:cos,0.040665068f0,:n0,1.2347615f0,:n1,0.118578486f0)
+	(:nkeep,500,:rscale,0.005,:cos,0.038107663f0,:n0,1.2347615f0,:n1,0.116561316f0)
+	the prediction does not get better with more points ?!
+	adding a bias (gradest2) does not help ?!
+	probably because we find the min norm solution to an overparametrized problem.
+
+	* gradest3: similar to gradest0 but uses all pairs. no difference.
+	(:nkeep,5,:rscale,0.5,:cos,0.0063070646f0,:n0,1.2347615f0,:n1,0.20065746f0)
+	(:nkeep,5,:rscale,0.05,:cos,0.008286434f0,:n0,1.2347615f0,:n1,0.02075055f0)
+	(:nkeep,5,:rscale,0.005,:cos,0.009162536f0,:n0,1.2347615f0,:n1,0.011931458f0)
+	(:nkeep,5,:rscale,0.0005,:cos,0.009177147f0,:n0,1.2347615f0,:n1,0.011397806f0)
+	(:nkeep,50,:rscale,0.005,:cos,0.030758942f0,:n0,1.2347615f0,:n1,0.037948858f0)
+
+	* gradest1: seems to be the best, fitting a plane to all points.
+	Can we do this online and incremental?  Perceptron-like algorithm?
+	Weigh the more recent examples more?  Compare fgold with fpred and
+	add or subtract x to w depending on which is bigger?  Use SGD?
+	SGD and perceptron would do the same update just with different
+	weights?  SGD update: w -= lr * (ypred-ygold) * x.  No need to
+	keep around a bunch of x history!  Just the final w is enough.
+	Note that w here does not correspond to the model weights but the
+	df/dx, i.e. our step directions to be added to the model weights.
+	x are the model weights, f is the loss function, df/dx=w is our
+	gradient estimate, we assume the function to be locally linear, so
+	df/dx does not change much in the local neighborhood. We should
+	find better notation.
+
+	Implement this in gd and see if it converges to the real gradient.
+	Then find the appropriate lr and **weight decay** (to emphasize
+	more recent points) and write dhc1.
+
+	also check:
+	http://stats.stackexchange.com/questions/23481/are-there-algorithms-for-computing-running-linear-or-logistic-regression-param
+
+	* gd2: implemented online regression (sgd) for gradient
+	estimation.  ideal lr ~ 1e-4.  l2reg does not help.  magnitude
+	wrong.  cosine >= 0.01 after 256 epochs.  not too good.  gd2 path
+	may be too single dimensional.
+
+	Next: write dhc1 with this update.  compare with real gradient.
+	add noise?
+
+	* gd3: gd2 was buggy.  fixed it.  also it did not handle biases.  fixed it.
+
+	* ego1: using estimated gradient plus noise for the moves.  right
+	now does not look better than dhc0.  however scaling of gradient
+	and noise is a problem.
+
+	julia> include("model05.jl"); ego1(weval, w64)
+	(2,:f0,2.6181548f0,:lr,1.0,:l2,0.1,:cs,0.99000714305148,:n0,1.2347884285449982,:n1,2.158173592761159e-5,:gscale,1.0,:savg,1.0,:err,0.9178833333333334)
+	(3,:f0,2.6150105f0,:lr,1.0,:l2,0.1,:cs,0.9801260752394737,:n0,1.234889672887325,:n1,6.479369511362165e-5,:gscale,1.0,:savg,1.0,:err,0.9177333333333333)
+	(4,:f0,2.6150105f0,:lr,1.0,:l2,0.1,:cs,0.9703487565133886,:n0,1.234989904786229,:n1,0.00011602359206532129,:gscale,1.0,:savg,0.99,:err,0.9169333333333334)
+	(8,:f0,2.5980928f0,:lr,1.0,:l2,0.1,:cs,0.9324377293448739,:n0,1.234326092454492,:n1,0.0006796836039120826,:gscale,1.0,:savg,0.9704940398999999,:err,0.9169333333333334)
+	(16,:f0,2.5789962f0,:lr,1.0,:l2,0.1,:cs,0.8611872309616654,:n0,1.2306951845898702,:n1,0.001649441486292222,:gscale,1.0,:savg,0.9439469182846529,:err,0.91845)
+	(32,:f0,2.5463068f0,:lr,1.0,:l2,0.1,:cs,0.7355274049627203,:n0,1.2220272005046857,:n1,0.004016892071192263,:gscale,1.0,:savg,0.8790432140739621,:err,0.90505)
+	(64,:f0,2.4968822f0,:lr,1.0,:l2,0.1,:cs,0.5385685776796055,:n0,1.2007973676062504,:n1,0.007233790915278808,:gscale,1.0,:savg,0.7826014702915499,:err,0.8934666666666666)
+	(128,:f0,2.406544f0,:lr,1.0,:l2,0.1,:cs,0.2913420054146067,:n0,1.132254324420326,:n1,0.009114755607433075,:gscale,1.0,:savg,0.609123813114731,:err,0.8782)
+	(256,:f0,2.2463145f0,:lr,1.0,:l2,0.1,:cs,0.09364994315950742,:n0,0.9662675988334811,:n1,0.008096173157284592,:gscale,1.0,:savg,0.5074488679132199,:err,0.8264333333333334)
+	(512,:f0,1.981547f0,:lr,1.0,:l2,0.1,:cs,0.022315554932628108,:n0,0.8196783925046222,:n1,0.0053788866996559055,:gscale,1.0,:savg,0.4856199247069694,:err,0.6625333333333333)
+	(1024,:f0,1.5792557f0,:lr,1.0,:l2,0.1,:cs,0.015908258638890466,:n0,0.761359331453413,:n1,0.004292693914322736,:gscale,1.0,:savg,0.3942557717979208,:err,0.4413)
+	(2048,:f0,1.0414001f0,:lr,1.0,:l2,0.1,:cs,0.01535587917443702,:n0,0.5270314693795349,:n1,0.0014692934376065467,:gscale,1.0,:savg,0.42844451454370297,:err,0.2901)
+	(4096,:f0,0.68275756f0,:lr,1.0,:l2,0.1,:cs,0.016301272471066337,:n0,0.271021195966326,:n1,0.00020126954476165992,:gscale,1.0,:savg,0.34691522233141386,:err,0.19375)
+	(8192,:f0,0.49213374f0,:lr,1.0,:l2,0.1,:cs,0.01653480459731199,:n0,0.13882901735253045,:n1,2.7093503323991826e-5,:gscale,1.0,:savg,0.44143610568498903,:err,0.1438)
+
+
+2016-04-27  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* cpu-experiments:
+	julia> dhc0(wtest2, w32cpu)
+	(2,:f0,2.366655931031704,:rscale,0.05,:savg,0.225,:x1,0.18194398f0,:err,0.90735)
+	(3,:f0,2.3645464693546296,:rscale,0.05,:savg,0.3025,:x1,0.21584664f0,:err,0.8886166666666667)
+	(4,:f0,2.33414979698658,:rscale,0.05,:savg,0.37224999999999997,:x1,0.20436966f0,:err,0.8950333333333333)
+	(8,:f0,2.33414979698658,:rscale,0.05,:savg,0.244233225,:x1,0.20436966f0,:err,0.8950333333333333)
+	(16,:f0,2.33414979698658,:rscale,0.05,:savg,0.10513439495505228,:x1,0.20436966f0,:err,0.8950333333333333)
+	(32,:f0,2.323915750879049,:rscale,0.025,:savg,0.20761680250000003,:x1,0.22561972f0,:err,0.8909166666666667)
+	(64,:f0,2.2802401048511265,:rscale,0.025,:savg,0.285881758456648,:x1,0.15215388f0,:err,0.8671833333333333)
+	(128,:f0,2.0869632361456754,:rscale,0.025,:savg,0.19739789014011858,:x1,0.14133687f0,:err,0.7782)
+	(256,:f0,1.8296592650726438,:rscale,0.025,:savg,0.10637466530398211,:x1,-0.09823373f0,:err,0.6508333333333334)
+	(512,:f0,1.4506678565766196,:rscale,0.0125,:savg,0.13467519104901735,:x1,-0.2798105f0,:err,0.5039)
+	(1024,:f0,1.081941541678147,:rscale,0.0125,:savg,0.17085619253400544,:x1,-0.37895575f0,:err,0.37535)
+	(2048,:f0,0.7604018840517701,:rscale,0.00625,:savg,0.17954945227295716,:x1,-0.27531037f0,:err,0.2719)
+	(4096,:f0,0.5163252194238263,:rscale,0.00625,:savg,0.25,:x1,-0.28552467f0,:err,0.19158333333333333)
+
+2016-04-26  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* TODO: write dhc1.  figure out minibatching.  derive analytic
+	expression for quadratic with dhc0.  what is the adaptive step
+	size in terms of curvature?  what is the path length?  how does
+	performance scale wrt the Hessian eigenvalue profile?  what is the
+	equivalent dimensionality?  what is the Hessian of mnist?  is
+	mnist more difficult than an equivalent quadratic?
+
+	* dhc1: assume noisy linear function y[n,1]=x[n,m]*b[m,1].  Then
+	the linear regression can be solved with b=x\y.  In a linear
+	function the weights are also the gradient.  So keep around the
+	last n x,y pairs and estimate gradient based on those.  Add some
+	noise to inject information.
+
+	But this does not even give x2-x1 when there are only two points
+	in history!?  Oh but there is f(0)=0?
+
+2016-04-22  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* model05.train: training with gradients is 100x faster than dhc0.
+	this is the 2 layer mnist model with 64 hidden (784*64+64*10=50816
+	weights). using batch training, i.e. the whole dataset, and lr=1.0
+	for backprop, we get to 0.1597 sloss, 0.0455 zloss in 500 updates,
+	roughly what we get with 64K updates with dhc0.  Having a fixed lr
+	with backprop is a problem, maybe that should also be adaptive
+	like the dhc0 step size.  I still don't know how to minibatch in
+	dhc.  First figure out how much faster dhc1,2 etc. is.  And for
+	that we need to figure out dhc1.
+
+	* model05.dhc0: no memory algorithm.  step size only important
+	thing.  decided to base step size on an exponential average of
+	recent success rate.  if it is lower than 0.05, decrease step
+	size, if it is higher than 0.45 increase it.  as step size goes to
+	0 we'd expect the success rate to approach 0.5.  this converges to
+	less than 10% training error in 16K function evaluations.
+
+	This is with MNIST.trn:
+	julia> setseed(2); @time dhc0(wtest, randn!(w64, 0, .1))
+	(2,:f0,2.4483323f0,:rscale,0.05,:savg,0.325,:x1,0.06538216f0,:err,0.9205333333333333)
+	(3,:f0,2.4483323f0,:rscale,0.05,:savg,0.29250000000000004,:x1,0.06538216f0,:err,0.9205333333333333)
+	(4,:f0,2.4483323f0,:rscale,0.05,:savg,0.26325000000000004,:x1,0.06538216f0,:err,0.9205333333333333)
+	(8,:f0,2.4483323f0,:rscale,0.05,:savg,0.17271832500000006,:x1,0.06538216f0,:err,0.9205333333333333)
+	(16,:f0,2.4228058f0,:rscale,0.05,:savg,0.1399595754786233,:x1,0.05579544f0,:err,0.8877666666666667)
+	(32,:f0,2.4137468f0,:rscale,0.025,:savg,0.21386025000000006,:x1,0.074142024f0,:err,0.8824833333333333)
+	(64,:f0,2.2818675f0,:rscale,0.025,:savg,0.10865956616057076,:x1,0.0515077f0,:err,0.83895)
+	(128,:f0,2.0478384f0,:rscale,0.0125,:savg,0.2840483000250001,:x1,0.00015302049f0,:err,0.7301833333333333)
+	(256,:f0,1.7887676f0,:rscale,0.025,:savg,0.13286025000000004,:x1,0.050201837f0,:err,0.6248166666666667)
+	(512,:f0,1.4310753f0,:rscale,0.0125,:savg,0.13948602546445027,:x1,0.06475257f0,:err,0.47545)
+	(1024,:f0,1.0776213f0,:rscale,0.0125,:savg,0.23468481225000007,:x1,0.12533954f0,:err,0.3512)
+	(2048,:f0,0.7496081f0,:rscale,0.00625,:savg,0.15920300135993315,:x1,0.27092293f0,:err,0.23441666666666666)
+	(4096,:f0,0.5381587f0,:rscale,0.003125,:savg,0.2541095086132723,:x1,0.23630363f0,:err,0.16401666666666667)
+	(8192,:f0,0.39279193f0,:rscale,0.003125,:savg,0.20071563742482945,:x1,0.23790172f0,:err,0.11731666666666667)
+	(16384,:f0,0.29282936f0,:rscale,0.0015625,:savg,0.14501833760269905,:x1,0.25325245f0,:err,0.08788333333333333)
+	(32768,:f0,0.21155417f0,:rscale,0.00078125,:savg,0.29904291021429524,:x1,0.16411695f0,:err,0.0628)
+	(65536,:f0,0.14062339f0,:rscale,0.00078125,:savg,0.1618249193977983,:x1,0.12628877f0,:err,0.042366666666666664)
+	(131072,:f0,0.079109505f0,:rscale,0.000390625,:savg,0.18003009654880908,:x1,0.1884097f0,:err,0.02355)
+
+	This is with MNIST.tst:
+	smin=0.05, smax=0.45
+	julia> setseed(2); @time dhc0(wtest2, randn!(w0, 0, .1), smin=0.05, smax=0.45)
+	(2,:f0,2.5309312f0,:rscale,0.05,:savg,0.225,:x1,0.085113816f0,:err,0.9290833333333334)
+	(3,:f0,2.4506972f0,:rscale,0.05,:savg,0.3025,:x1,0.06538216f0,:err,0.9205333333333333)
+	(4,:f0,2.4506972f0,:rscale,0.05,:savg,0.27225,:x1,0.06538216f0,:err,0.9205333333333333)
+	(8,:f0,2.4506972f0,:rscale,0.05,:savg,0.17862322500000002,:x1,0.06538216f0,:err,0.9205333333333333)
+	(16,:f0,2.4277704f0,:rscale,0.05,:savg,0.1497914413069523,:x1,0.05579544f0,:err,0.8877666666666667)
+	(32,:f0,2.4195468f0,:rscale,0.025,:savg,0.23762250000000007,:x1,0.074142024f0,:err,0.8824833333333333)
+	(64,:f0,2.2667296f0,:rscale,0.025,:savg,0.13167475020267436,:x1,0.05777182f0,:err,0.8260166666666666)
+	(128,:f0,2.0233579f0,:rscale,0.0125,:savg,0.27905575892500006,:x1,-0.05668414f0,:err,0.7518833333333333)
+	(256,:f0,1.7491608f0,:rscale,0.025,:savg,0.14762250000000005,:x1,-0.04065349f0,:err,0.6153833333333333)
+	(512,:f0,1.4598908f0,:rscale,0.0125,:savg,0.08719939160457611,:x1,-0.17197444f0,:err,0.5080333333333333)
+	(1024,:f0,1.0580322f0,:rscale,0.0125,:savg,0.059124065642528194,:x1,-0.18181823f0,:err,0.3692666666666667)
+	(2048,:f0,0.71899986f0,:rscale,0.00625,:savg,0.18505253440919323,:x1,-0.19046926f0,:err,0.24738333333333334)
+	(4096,:f0,0.46441835f0,:rscale,0.003125,:savg,0.17154392695348444,:x1,-0.13855904f0,:err,0.16878333333333334)
+	(8192,:f0,0.3188449f0,:rscale,0.003125,:savg,0.2073461581900341,:x1,-0.030861322f0,:err,0.12283333333333334)
+	(16384,:f0,0.2064664f0,:rscale,0.003125,:savg,0.20671529370229635,:x1,-0.050878197f0,:err,0.09783333333333333)
+	(32768,:f0,0.10584022f0,:rscale,0.00078125,:savg,0.19783566687839613,:x1,0.06920351f0,:err,0.08023333333333334)
+	(65536,:f0,0.030262008f0,:rscale,0.00078125,:savg,0.1864547555982178,:x1,0.067481935f0,:err,0.07331666666666667)
+	(131072,:f0,0.001742074f0,:rscale,0.00078125,:savg,0.12709628236028334,:x1,0.14090158f0,:err,0.06773333333333334)
+
+	smin=0.1, smax=0.3
+	(1024,:f0,1.041478f0,:rscale,0.00625,:savg,0.2,:x1,0.016578615f0,:err,0.3590333333333333)
+	(2048,:f0,0.78312224f0,:rscale,0.00625,:savg,0.11421896419321204,:x1,0.09141578f0,:err,0.26658333333333334)
+	(4096,:f0,0.5174537f0,:rscale,0.003125,:savg,0.16200000000000003,:x1,0.300378f0,:err,0.17936666666666667)
+	(8192,:f0,0.35741013f0,:rscale,0.0015625,:savg,0.16533720000000005,:x1,0.20499815f0,:err,0.13455)
+	(16384,:f0,0.23206171f0,:rscale,0.00078125,:savg,0.28317537802000003,:x1,0.17900981f0,:err,0.10553333333333334)
+
+	smin=0.10, smax=0.4
+	(1024,:f0,1.0649883f0,:rscale,0.00625,:savg,0.3632500000000001,:x1,-0.0033069442f0,:err,0.36925)
+	(2048,:f0,0.7241713f0,:rscale,0.003125,:savg,0.39546380635863143,:x1,0.14225093f0,:err,0.25083333333333335)
+	(4096,:f0,0.4973325f0,:rscale,0.003125,:savg,0.19512811478827574,:x1,0.20412616f0,:err,0.17921666666666666)
+	(8192,:f0,0.34192523f0,:rscale,0.003125,:savg,0.22694769460822511,:x1,0.18839365f0,:err,0.13125)
+	(16384,:f0,0.22403882f0,:rscale,0.0015625,:savg,0.12591165892500006,:x1,0.25185814f0,:err,0.10281666666666667)
+
+	smin=0.15, smax=0.4
+	(1024,:f0,1.0692188f0,:rscale,0.0125,:savg,0.2509231232611428,:x1,-0.1606814f0,:err,0.36823333333333336)
+	(2048,:f0,0.7394346f0,:rscale,0.003125,:savg,0.20037630236683868,:x1,-0.26362208f0,:err,0.25383333333333336)
+	(4096,:f0,0.50305945f0,:rscale,0.0015625,:savg,0.24826406387412853,:x1,-0.18044733f0,:err,0.17695)
+	(8192,:f0,0.33778623f0,:rscale,0.0015625,:savg,0.26142750000000003,:x1,-0.16619824f0,:err,0.12666666666666668)
+	(16384,:f0,0.22357517f0,:rscale,0.00078125,:savg,0.16340437128258564,:x1,-0.13290748f0,:err,0.1034)
+
+	smin=0.025, smax=0.4
+	(1024,:f0,1.2019854f0,:rscale,0.0125,:savg,0.2568025545599606,:x1,-0.29323524f0,:err,0.4141666666666667)
+	(2048,:f0,0.81577384f0,:rscale,0.00625,:savg,0.3104724021882812,:x1,-0.4574901f0,:err,0.27825)
+	(4096,:f0,0.52965456f0,:rscale,0.00625,:savg,0.06877870874995877,:x1,-0.41713786f0,:err,0.19121666666666667)
+	(8192,:f0,0.34861276f0,:rscale,0.0015625,:savg,0.26001636409621814,:x1,-0.2858457f0,:err,0.13418333333333332)
+	(16384,:f0,0.22037202f0,:rscale,0.0015625,:savg,0.1434135792567693,:x1,-0.23752548f0,:err,0.10325)
+
+	smin=0.05, smax=0.25
+	(1024,:f0,1.1145252f0,:rscale,0.00625,:savg,0.24557008150000004,:x1,-0.012000332f0,:err,0.3894666666666667)
+	(2048,:f0,0.83207786f0,:rscale,0.00625,:savg,0.10928740897430315,:x1,-0.023262713f0,:err,0.3007166666666667)
+	(4096,:f0,0.5703804f0,:rscale,0.00625,:savg,0.14811307335,:x1,0.07253787f0,:err,0.20888333333333334)
+	(8192,:f0,0.3848999f0,:rscale,0.003125,:savg,0.15274453500000001,:x1,0.09485863f0,:err,0.15198333333333333)
+	(16384,:f0,0.25086364f0,:rscale,0.003125,:savg,0.12150000000000001,:x1,0.09143871f0,:err,0.11613333333333334)
+
+	smin=0.05, smax=0.35
+	(1024,:f0,1.1126677f0,:rscale,0.00625,:savg,0.2622331620603269,:x1,0.20429325f0,:err,0.38293333333333335)
+	(2048,:f0,0.7457271f0,:rscale,0.00625,:savg,0.17243262829620004,:x1,0.23780666f0,:err,0.2614666666666667)
+	(4096,:f0,0.5035253f0,:rscale,0.00625,:savg,0.11381959901408918,:x1,0.3306762f0,:err,0.19066666666666668)
+	(8192,:f0,0.3363405f0,:rscale,0.003125,:savg,0.09229797252199087,:x1,0.49710137f0,:err,0.13506666666666667)
+	(16384,:f0,0.2136927f0,:rscale,0.003125,:savg,0.06973568802000002,:x1,0.41707116f0,:err,0.10626666666666666)
+
+	smin=0.05, smax=0.4
+	(1024,:f0,1.0286932f0,:rscale,0.0125,:savg,0.2815568782303013,:x1,-0.17222226f0,:err,0.3536166666666667)
+	(2048,:f0,0.72659373f0,:rscale,0.00625,:savg,0.2275069294803744,:x1,-0.14596477f0,:err,0.25605)
+	(4096,:f0,0.49135926f0,:rscale,0.003125,:savg,0.23659311692812496,:x1,0.032423574f0,:err,0.18048333333333333)
+	(8192,:f0,0.3274787f0,:rscale,0.003125,:savg,0.08907932290236607,:x1,0.03056408f0,:err,0.12818333333333334)
+	(16384,:f0,0.20988116f0,:rscale,0.0015625,:savg,0.33958232383424986,:x1,0.012570657f0,:err,0.10011666666666667)
+
+
+2016-03-27  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* out-of-memory:
+	julia> dhc2(mnist_loss1, mnist_w)
+	(2,2.302585f0,0,0.0f0,0.8865)
+	(3,2.302585f0,0,0.0f0,0.8865)
+	(4,2.302585f0,0,0.0f0,0.8865)
+	(8,2.3011198f0,3.546726f0,-0.02738631f0,0.8317)
+	(16,2.2882648f0,3.596483117699623,-0.08182946f0,0.8862)
+	(32,2.2827563f0,3.4166385091737737,-0.058966264f0,0.8673)
+	(64,2.2407193f0,3.2137988924131107,-0.0675793f0,0.7725)
+	(128,2.1270292f0,2.757759338098856,-0.0051690643f0,0.7385)
+	(256,1.9727579f0,1.9961234132414114,0.32717773f0,0.6984)
+	(512,1.7436141f0,1.1663972594453365,0.43614122f0,0.5927)
+	(1024,1.3700264f0,0.6938317721664718,0.50602895f0,0.4464)
+	(2048,1.0177643f0,0.4487385803617957,0.68413025f0,0.3268)
+	WARNING: CUDA error triggered from:
+
+	in checkerror at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/libcudart-6.5.jl:15
+	in malloc at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/pointer.jl:36
+	in call at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/arrays.jl:99
+	in softloss at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/Knet/src/loss.jl:95
+	in mnist_loss1 at /mnt/kufs/scratch/dyuret/dhc/model04.jl:80
+	in dhc2 at /mnt/kufs/scratch/dyuret/dhc/model04.jl:28ERROR: "out of memory"
+	in checkerror at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/libcudart-6.5.jl:16
+	in malloc at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/pointer.jl:36
+	in call at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/CUDArt/src/arrays.jl:99
+	in softloss at /mnt/kufs/scratch/dyuret/knet/dev/.julia/v0.4/Knet/src/loss.jl:95
+	in mnist_loss1 at /mnt/kufs/scratch/dyuret/dhc/model04.jl:80
+	in dhc2 at /mnt/kufs/scratch/dyuret/dhc/model04.jl:28
+
+
+	* model04.jl (mnist_f): Trying dhc2 on mnist.  Can optimize the
+	first batch easily when minibatch size is 100 but not when 1000.
+	Maybe other hyperparameters, maybe better algorithm.  Look into
+	ideal batchsize, and the effect of switching between minibatches.
+
+	* TODO:
+	TODO: minibatches present a moving target.  Compare performance on
+	a fixed batch of 1000.
+	TODO: try some of radford anim functions, branin from spearmint.
+	TODO: understand different move types dhc makes to find inefficiency.
+	TODO: implement actual gradient / hessian estimation from history.
+	TODO: we probably give up on the old step too quickly, implement a
+	last vector + noise model shrinking the vector when searching for a new
+	direction.
+
+	* model04.jl: dhc2: lollipop model with a v+r step.  Performs
+	roughly the same as dhc1 when hyperparameters are optimized.
+
+	ndims	dhc2	dhc1
+	64	6287	4798
+	256	12279	12381
+	1024	33842	34694
+	4096	108619	109961
+
+	julia> dhc2(sphere, zeros(25000); grow=2, rmin=1e-3, rstep=1.0, ftol=1e-4)
+	(2,4.0,0,[0.0,0.0,0.0])
+	(3,4.0,0,[0.0,0.0,0.0])
+	(4,4.0,0,[0.0,0.0,0.0])
+	(8,4.0,0,[0.0,0.0,0.0])
+	(16,3.9997652679937574,0.027356314829448575,[6.805561695084039e-5,-9.15074578746432e-5,-0.00014840101634105854])
+	(32,3.999635563378696,0.026769225047852847,[0.00034153635322551414,-0.00047726931059101455,-0.00027639603738416525])
+	(64,3.997707825796916,0.025170684672126707,[0.001315671887597066,-0.0002797336250665011,4.516019620072057e-5])
+	(128,3.994151327355715,0.02090650403126435,[0.0031655964985825083,-0.0004073386667886254,-5.011183912052896e-6])
+	(256,3.983016511277797,0.015538677163900122,[0.007488705151600857,-0.00026014628326087027,5.811127241039015e-5])
+	(512,3.970989121637036,0.009397977204044686,[0.012808918226044732,-0.0013235374822311249,0.0005139912178398821])
+	(1024,3.936074391638352,0.005659121018421194,[0.024604212073594534,0.00021536245995560654,0.0007795819357470855])
+	(2048,3.863009319135368,0.004969860746801436,[0.04728178955356923,8.725494758804884e-5,0.001654810809022204])
+	(4096,3.7085857782566363,0.004669002165971517,[0.08813827768600124,-0.0017322084706648236,0.0013894955966369676])
+	(8192,3.417671911081735,0.0047504574818724625,[0.16553528522219743,-0.0006830102196809031,-0.004017667875271564])
+	(16384,2.862969913235632,0.004750392565445634,[0.319373411284871,-0.0030835522673731486,-0.010305883047202148])
+	(32768,2.022120234075572,0.004315705045452952,[0.5849357290616883,-0.003047966324029926,-0.005841501963862755])
+	(65536,1.074456224228496,0.00371342512878173,[0.9666301669349511,-0.0024931820175178414,0.007691832311206207])
+	(131072,0.3135581633033176,0.003261767598482369,[1.4414147227115948,-0.0012172920147941293,0.0057463682709860105])
+	(262144,0.027268859938291222,0.002213656342127768,[1.8350747530349742,-0.0018924885086953037,0.0014391945825391874])
+	(524288,0.00020661794728649813,0.0011430193439460048,[1.9856454846734768,-0.0011067700601959873,0.00012761251650944566])
+	(567920,9.999430843751096e-5,0.0010556076775738953,[1.99001,-0.000627419,0.000383521])
+
+2016-03-26  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* sphere: a generalization of rosenbrock idea to multiple
+	dimensions. dims vs function calls.  nelder cannot find in 16+
+	dims.  bfgs, l_bfgs, cg all converge in ~700 evals regardless of
+	dimensionality!  gd takes ~10000 again independent of
+	dimensionality.  dhc always converges, unlike nelder.  Its
+	increase is sublinear with dims.
+
+	dims	nelder	dhc
+	2	304	3000
+	4	855	4000
+	8	3757	7000
+	16	fail	10000
+	1024	--	160000
+	25000	--	1565490
+
+	* baselines: for rosenbrock starting at 0,0 Optim.jl converges in:
+	[xtol=ftol=gtol=1e-8 for convergence]
+	simulated_annealing: never
+	gradient_descent: 56977 (xtol)
+	momentum_gradient_descent: 3136 (xtol)
+	nelder_mead = 115 (ftol)
+	bfgs = l-bfgs: 90 (xtol)
+	cg = 81 (60 gradient calls, x/f/gtol)
+	newton = 54 (gtol)
+
+	* model02.jl: dhc1 implements Proc 3.1 and gets to 0.60 sloss in
+	64 epochs without significant change after.  For comparison SGD
+	gets to 0.36 in 1 epoch. Growth factor seems important to
+	optimize.  dhc2 implements Proc 4.1 and does not perform better.
+
+
+	* model03.jl (nrosenbrock): Tried to implement the original DHC, it
+	seems to be beaten by simplex (Nelder-Mead) from Optim.jl.
+
+2016-03-24  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* quadratic: If we fit f(x)=(1/2)x'Hx+x'b+c to our function we
+	have f'=Hx+b, xmin=-H^-1 b (if H is positive semi-definite, which
+	is the case if H=R*R' for some R), f''=H hessian.
+
+	If we have a bunch of vi coming up to the latest point, let
+	ui=vi/|vi| be the unit vectors in the vi directions, and
+	grad(f)=dfi/|vi| is a vector of gradient estimates associated with
+	them.  If U is a matrix whose rows are ui, and b is a vector
+	of partial derivatives wrt vi, U*grad(f)=b.  This underdetermined
+	linear eqn can be solved using grad(f)=pinv(U)*b.  This makes no
+	use of second order information, and just gives us an estimate for
+	a good direction.  If we have multiple v's in the same direction,
+	we should pick the closest one.
+
+	What is the cost of pinv?  Is it worth it?  Does this beat the
+	original DHC?  Is there an approximation to pinv we can derive DHC
+	from?
+
+	I think we can get the original DHC from this if we assume all
+	measured derivatives were equal, i.e. b[:]==1.  Then the gradient
+	array is simply the sum of all the rows of U.  In general if the
+	ui are orthogonal we can set x=sum(bi ui) and it would give us ui
+	x = bi for each i.  So x=sum(bi ui) is an approximate solution to
+	our problem that require no inversion.
+
+	** We determine distance adaptively?  Can we do something second
+	order?  Can we fit best quadratic using xi and jump to its
+	minimum?  We need a cheap H estimate like the cheap grad(f)
+	estimate.
+
+	* links:
+	http://math.stackexchange.com/questions/239207/hessian-matrix-of-a-quadratic-form
+	http://komarix.org/ac/papers/thesis/thesis_html/node9.html
+	http://www.cis.upenn.edu/~cis515/cis515-11-sl12.pdf
+
+	* dhc: the information we have at every decision point is the size
+	and direction of the last N steps, the f(x) value of the last N
+	points (or maybe just ordinal information about which was
+	better).  If the points in history are x1..xn and the steps are
+	vi=x[i+1]-xi we know that relative to the point xn, each of xn-xi
+	vectors have been an improvement and may provide good directions.
+	If we just keep around vi and not xi, xn-xi = vi+...+v[n-1],
+	i.e. we can just compute running sums.  The steps that come from
+	further away have the advantage of being larger, but the
+	information is not as local.  The local ones are more reliable but
+	small.  We also have a small gaussian step which always has 1/2
+	probability of improving (unless we are at a local minimum).
+	Maybe some combination of xn-xi and the random vector with given
+	weights could be tried.  Then there are the failed steps, which
+	provide more information, i.e. going in the opposite direction may
+	be good.  Same considerations of distance vs reliability apply.
+	We should make use of every vector that ends at xn.  We either
+	have the amount of improvement for each (i.e. derivative as a
+	quantity), or just ordinal information.  We could ask what would
+	an ideal step be given this information with various simplifying
+	assumptions: i.e. second order function, gaussian process,
+	Lipschitz continuous etc.
+
+	* cosine: most cosines in model01.out (between dw and w2-w1) are
+	on the order of 0.01, which at first I thought was very close to
+	0.  But in high dimensions most cosines are close to 0.  Maybe the
+	prob of random vector having a better cosine would be a more
+	dimension independent understandable metric.  The cosine between
+	two random unit vectors in N dimensions is basically sum ai bi
+	where ai and bi are normal random variables with 0 mean and 1/N
+	variance.  It turns out Var(a*b)=Var(a)*Var(b) for independent
+	normal random variables (checked numerically, also proved in
+	bertsekas).  So each term in the cosine has Var=1/N^2 and the
+	cosine itself has Var=1/N.  Random cosine is well approximated by
+	a normal with mean=0, variance=1/N in high dimensions.  In our
+	case we have 25408 weights, so standard deviation is 0.006.  Only
+	1% of random cosines would be greater than 2.33*0.006=0.0146.  In
+	2D the 1% vector pairs would have an angle of pi/100 and a cosine
+	of 0.9995.
+
+2016-03-23  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* model01.jl: Do mnist models converge to the same point?  Here it
+	is important to point out some inherent symmetry in the models,
+	i.e. you can always permute the rows of w1 and columns of w2 and
+	get the same model.  So to compare two models we have to put them
+	into a standard order.
+
+	julia> for i=1:10; push!(models, train01(seed=i)); end
+
+	Saved in models.jld.  Does not look like they are that similar
+	even if we normalize for permutation.  Maybe there are multiple
+	solutions, maybe I didn't do a careful unpermuting, maybe they did
+	not fully converge at zeroone=0 (softloss=0.001 approx).
+
+	We can still plot the moves though.  Same seed takes exactly the
+	same steps.  For each step plot the distance to target |w0-w|,
+	size of step |lr*dw|, and projection of the step onto the target
+	vector (lr*dw.(w0-w))/|w0-w|.
