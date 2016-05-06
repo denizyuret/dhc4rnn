@@ -1,3 +1,10 @@
+*.dat
+*.dat?
+*.jld
+unused
+.juliahistory
+RCS
+
 # Object files
 *.o
 *.ko
