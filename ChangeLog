@@ -2,9 +2,14 @@
 
 	* TODO:
 	- understand 2010 paper math, see if convergence can be	accelerated.
-	- pick out 5 starting points at different f0 and see the optimum hypers for batch and minibatch.
+	- pick out 5 starting points at different f0 (done: gd3save.jld) and see the optimum hypers for batch and minibatch.
+
 	- compare grad moves with grad+noise moves for batch and minibatch.  does noise have a benefit independent of helping estimate?
-	- compare using grad+noise vs noise for estimation.  does grad+noise implement 2010 acceleration?
+	ego2b.out has the results.  It looks like sometimes random vector wins, sometimes gradient.
+	Trying the sum has the advantage of making progress when either one does.
+
+	- compare using grad+noise vs noise for estimation. does grad+noise implement 2010 acceleration?
+	during static estimation, does not look like it.  gradest5 indicates random sampling still the best.
 
 2016-05-10  Deniz Yuret  <dyuret@ku.edu.tr>
 

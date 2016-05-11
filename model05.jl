@@ -192,8 +192,9 @@ function gradest3{T}(f::Function, x::BaseVector{T}; rscale=0.005, nkeep=5)
     println((:nkeep,nkeep,:rscale,rscale,:cos,cosine,:n0,n0,:n1,n1))
 end
 
+# MC estimation of gradient.  cos(alpha)=sqrt(k/n) almost exactly.
+
 function gradest4{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=256, lr=1.0, l2=0.0)
-    g0,x0,f0,n0,g,r,f1,f2,cs,n1,nr
     x0 = copy(x)
     g0 = similar(x)
     f0 = f(x0, g0)
@@ -202,7 +203,7 @@ function gradest4{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=256, 
     @show CUBLAS.dot(x0,g0)/(n0*nx)
     r = similar(x)
     g = fill!(similar(x),0)
-    nf = 0; np = 1
+    cs = 0; nf = 0; np = 1
     for i=1:nsample
         scale!(rscale, randn!(r))
         nr = vecnorm(r)
@@ -218,6 +219,39 @@ function gradest4{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=256, 
         end
     end
     println((nsample,:cos,cs,:n1n0,n1/n0,:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:n0,n0,:n1,n1,:nr,nr))
+end
+
+# Try random steps biased toward the current gradient estimate rather
+# than radially symmetric.
+
+function gradest5{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=128, lr=1.0, l2=0.0, gbias=1.0)
+    x0 = copy(x)
+    g0 = similar(x)
+    f0 = f(x0, g0)
+    ng0 = vecnorm(g0)
+    nx0 = vecnorm(x0)
+    @show CUBLAS.dot(x0,g0)/(ng0*nx0)
+    r = similar(x)
+    nr0 = sqrt(length(x))
+    g = fill!(similar(x),0)
+    ng = cs = nf = f1 = f2 = nr = 0; np = 1
+    for i=1:nsample
+        randn!(r)
+        ng > 0 && axpy!(gbias*nr0/ng, g, r)
+        scale!(rscale, r)
+        nr = vecnorm(r)
+        f1 = f(axpy!(1, r, copy!(x,x0)))
+        f2 = f0 + CUBLAS.dot(g, r)
+        l2 != 0 && scale!(1-lr*l2, g)
+        axpy!(-lr*(f2-f1)/(nr*nr), r, g) # NLMS algorithm normalizes with nr*nr (wikipedia, which also has convergence proofs)
+        ng = vecnorm(g)
+        cs = CUBLAS.dot(g0,g)/(ng0*ng)
+        if (nf+=1) >= np
+            println((i,:cos,cs,:ngng0,ng/ng0,:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:ng0,ng0,:ng,ng,:nr,nr))
+            np *= 2
+        end
+    end
+    println((nsample,:cos,cs,:ngng0,ng/ng0,:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:ng0,ng0,:ng,ng,:nr,nr))
 end
 
 function train(f, data, loss; epochs=100)
@@ -546,7 +580,29 @@ function gd3turn{T}(f::Function, x::BaseVector{T}; gscale=1.5, ftol=0.05, alpha=
     return f0
 end
 
-function ego2{T}(f::Function, x::BaseVector{T}; gscale=1.0, ftol=0.05, alpha=0.01, lr=1.0, l2=0.1, noise=1.0, rmin=1e-6, stepsize=100.0)
+using Knet: cpucopy
+
+# Run gd, save points every 2^n iterations
+function gd3save{T}(f::Function, x::BaseVector{T}; gscale=0.75, ftol=0.05, alpha=0.1)
+    g0 = similar(x)
+    f0 = f(x, g0)
+    gavg = vecnorm(g0)
+    savg = 1.0
+    xbuf = Any[]
+    nf = np = 1
+    while f0 > ftol
+        f1 = f(axpy!(-gscale, g0, x), g0)
+        gavg = (1-alpha)*gavg + alpha * vecnorm(g0)
+        savg = (1-alpha)*savg + alpha * (f1<f0)
+        f0 = f1
+        (nf+=1) >= np && (np*=2; println((nf,:f0,f0,:savg,savg,:gavg,gavg,:err,wtest(x, zeroone))); push!(xbuf,copy(x)))
+        nf % 100 == 0 && gc()
+    end
+    println((nf,:f0,f0,:savg,savg,:gavg,gavg,:err,wtest(x, zeroone))); push!(xbuf,copy(x))
+    return xbuf
+end
+
+function ego2{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.01, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, stepsize=100.0)
     # x0 is the anchor point
     x0 = copy(x)
     g0 = similar(x0)
@@ -623,6 +679,68 @@ function ego2{T}(f::Function, x::BaseVector{T}; gscale=1.0, ftol=0.05, alpha=0.0
     end
     println((nf,:f0,f0,:cos,cs_avg,:n0,n0_avg,:n1,n1_avg,:nr,nr_avg,:savg,savg,:err,wtest(x, zeroone),:lr,lr,:l2,l2,:stepsize,stepsize,:noise,noise))
     return f0
+end
+
+
+# Consider the points x0, x0+r, x0+g, x0+g+r
+# where g is the grad estimate and r is a similar sized random vector
+# Evaluate using them for steps and for gradient estimation
+
+function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, step=100.0)
+    dg = similar(x)             # -step * g
+    dr = similar(x)             # noise * step * (ng/nr) * randn
+    dh = similar(x)             # dg + dr
+    xg = similar(x)             # x + dg
+    xr = similar(x)             # x + dr
+    xh = similar(x)             # x + dh
+    g0 = similar(x)             # real gradient from x
+    fx = f(x,g0)
+    ng0 = vecnorm(g0)
+    g = scale!(rmin, randn!(similar(x))) # gradient estimate
+    ng = vecnorm(g)
+    nr = sqrt(length(x))        # norm of randn
+    dfg = dfr = dfh = 0.0
+    nf = nt = 0
+    
+    while fx > ftol
+        scale!(-step, copy!(dg,g))
+        axpy!(1, dg, copy!(xg,x))
+        fg = f(xg)
+
+        scale!(noise * step * ng / nr, randn!(dr))
+        axpy!(1, dr, copy!(xr,x))
+        fr = f(xr)
+
+        axpy!(1, dr, copy!(dh,dg))
+        axpy!(1, dh, copy!(xh,x))
+        fh = f(xh)
+
+        # Which point is the best to move to?
+        dfg = (1-alpha)*dfg + alpha*(fg<fx)*(fg-fx)
+        dfr = (1-alpha)*dfr + alpha*(fr<fx)*(fr-fx)
+        dfh = (1-alpha)*dfh + alpha*(fh<fx)*(fh-fx)
+
+        # Update gradient estimate based on xh
+        # fh2 = fx + CUBLAS.dot(g, dh)
+        # axpy!(-lr*(fh2-fh)/(vecnorm(dh)^2), dh, g)
+
+        # Update gradient estimate based on xr
+        fr2 = fx + CUBLAS.dot(g, dr)
+        axpy!(-lr*(fr2-fr)/(vecnorm(dr)^2), dr, g)
+        ng = vecnorm(g)
+
+        # Report
+        cs = CUBLAS.dot(g,g0)/(ng*ng0)
+        nf += 1
+        (time()>=nt) && (println((nf,:fx,fx,:ng,ng,:ng0,ng0,:cos,cs,:dfg,dfg,:dfr,dfr,:dfh,dfh)); nt=10+time())
+
+        # Update anchor point based on xg for now
+        if fg < fx
+            copy!(x, xg)
+            fx = f(x, g0)
+            ng0 = vecnorm(g0)
+        end
+    end
 end
 
 # Make the step size (maybe later also the noise size) adaptive.
@@ -872,6 +990,8 @@ function ego5{T}(f::Function, x::BaseVector{T}; ftol=0.05, rmin=1e-6, lr=0.5, no
     return f0
 end
 
+# ego5b: Update f2 (thus step,noise) every 10 steps instead of every step.
+
 function ego5b{T}(f::Function, x::BaseVector{T}; ftol=0.05, rmin=1e-6, lr=0.5, noise=2.0, step=128.0, maxnf=Inf)
     # gradient estimate
     g = fill!(similar(x), 0)
@@ -1005,11 +1125,6 @@ function ego6{T}(f::Function, x::BaseVector{T}; ftol=0.05, rmin=1e-6, lr=0.5, st
 end
 
 
-# Trying minibatching.  Each minibatch will change f.  In order to do
-# meaningful comparisons we need to compare multiple points on the
-# same minibatch.  So we change the calling convention of f to take an
-# arbitrary number of w's and return a corresponding number of values.
-
 using Knet: cslice!, csize
 
 function wmini(ws...; x=MNIST.xtrn, y=MNIST.ytrn, loss=softloss, batchsize=100)
@@ -1030,6 +1145,11 @@ function wmini(ws...; x=MNIST.xtrn, y=MNIST.ytrn, loss=softloss, batchsize=100)
     length(fval)==1 && (fval=fval[1])
     return fval
 end
+
+# ego7: Trying minibatching.  Each minibatch will change f.  In order to do
+# meaningful comparisons we need to compare multiple points on the
+# same minibatch.  So we change the calling convention of f to take an
+# arbitrary number of w's and return a corresponding number of values.
 
 function ego7{T}(f::Function, x0::BaseVector{T}; ftol=0.05, rmin=1e-6, lr=1.0, noise=1.2, step=50.0, maxnf=Inf, maxdx=0.1)
     # gradient estimate
