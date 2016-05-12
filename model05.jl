@@ -1399,8 +1399,8 @@ function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gste
     fill!(g, 0)
     f0 = Inf
     dims = length(x0)
-    nf = np = 1
-    while f0 > ftol
+    nf = nt = 0; np = 1
+    for nf = 1:maxnf
         # Update the gradient
         axpy!(rstep, randn!(d), copy!(x1,x0))           # dx = rstep * d
         (f0,f1) = f(x0,x1)
@@ -1418,8 +1418,12 @@ function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gste
             (f0,f2) = f(x0,x2)
         end
         (f2 < f0) && (f0=f2; copy!(x0,x2))
-        (nf+=1)>=np && (np*=2;println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone))))
         nf >= maxnf && break
+        if (nf+=1)>=np || time()>=nt
+            nf >= np && (np*=2)
+            time() >= nt && (nt=60+time())
+            println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone)))
+        end
     end
     println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone)))
 end
