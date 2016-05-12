@@ -19,7 +19,6 @@ end
 
 cosine(x,y)=CUBLAS.dot(x,y)/(vecnorm(x)*vecnorm(y))
 setseed(42)
-fmodel = nothing
 gc()
 @gpu w64 = scale!(0.01, randn!(CudaArray(Float32, 794*64)))
 @gpu w32 = scale!(0.01, randn!(CudaArray(Float32, 794*32)))
@@ -29,7 +28,7 @@ w32cpu = scale!(0.01, randn!(Array(Float32, 794*32)))
 
 @gpu function initmodel{T}(w::CudaArray{T}, g=nothing; X=784, Y=10, H=div(length(w),X+Y), lr=0.5)
     global fmodel
-    if fmodel == nothing
+    if !isdefined(:fmodel)
         fmodel = compile(:model02; hidden=H)
         setp(fmodel, lr=lr)
         forw(fmodel, zeros(T, X, 1))
@@ -48,7 +47,7 @@ submatrix(a, i, m, n)=pointer_to_array(pointer(a, i), (m, n))
 
 function initmodel{T}(w::Array{T}, g=nothing; X=784, Y=10, W=length(w), H=div(W,X+Y), lr=0.5)
     global fmodel
-    if fmodel == nothing
+    if !isdefined(fmodel)
         fmodel = compile(:model02; hidden=H)
         setp(fmodel, lr=lr)
         forw(fmodel, zeros(T, X, 1))
@@ -78,14 +77,16 @@ end
 #     return loss(ypred, y)
 # end
 
-function weval(w, g=nothing; x=MNIST.xtrn, y=MNIST.ytrn, loss=softloss)
+gpu_ytrn = CudaArray(MNIST.ytrn)
+
+function weval(w, g=nothing; x=MNIST.xtrn, y=gpu_ytrn, loss=softloss)
     f = initmodel(w, g)
     ypred = forw(f, x)
     g != nothing && back(f, y, loss)
     return loss(ypred, y)
 end
 
-function wtest(w, loss=softloss; x=MNIST.xtrn, y=MNIST.ytrn)
+function wtest(w, loss=softloss; x=MNIST.xtrn, y=gpu_ytrn)
     f = initmodel(w)
     ypred = forw(f, x)
     return loss(ypred, y)
@@ -203,7 +204,7 @@ function gradest4{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=256, 
     @show CUBLAS.dot(x0,g0)/(n0*nx)
     r = similar(x)
     g = fill!(similar(x),0)
-    cs = 0; nf = 0; np = 1
+    cs = 0; n1 = nf = f1 = f2 = 0; np = 1
     for i=1:nsample
         scale!(rscale, randn!(r))
         nr = vecnorm(r)
@@ -214,15 +215,15 @@ function gradest4{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=256, 
         n1 = vecnorm(g)
         cs = CUBLAS.dot(g0,g)/(n0*n1)
         if (nf+=1) >= np
-            println((i,:cos,cs,:n1n0,n1/n0,:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:n0,n0,:n1,n1,:nr,nr))
+            println((nf,:cos,cs,:n1n0,n1/n0,:nfnd,sqrt(nf/length(x)),:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:n0,n0,:n1,n1,:nr,nr))
             np *= 2
         end
     end
-    println((nsample,:cos,cs,:n1n0,n1/n0,:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:n0,n0,:n1,n1,:nr,nr))
+    println((nf,:cos,cs,:n1n0,n1/n0,:nfnd,sqrt(nf/length(x)),:f2f1,f2-f1,:f1f0,f1-f0,:f0,f0,:n0,n0,:n1,n1,:nr,nr))
 end
 
 # Try random steps biased toward the current gradient estimate rather
-# than radially symmetric.
+# than radially symmetric.  Does not improve.
 
 function gradest5{T}(f::Function, x::BaseVector{T}; rscale=0.0001, nsample=128, lr=1.0, l2=0.0, gbias=1.0)
     x0 = copy(x)
@@ -602,7 +603,7 @@ function gd3save{T}(f::Function, x::BaseVector{T}; gscale=0.75, ftol=0.05, alpha
     return xbuf
 end
 
-function ego2{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.01, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, stepsize=100.0)
+function ego2{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.01, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, stepsize=100.0, maxnf=Inf)
     # x0 is the anchor point
     x0 = copy(x)
     g0 = similar(x0)
@@ -676,6 +677,7 @@ function ego2{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.01, lr=1.0, l
             gc()
             # println((:mem, Knet.gpumem(), :gc, (gc();gpusync();Knet.gpumem())))
         end
+        nf >= maxnf && break
     end
     println((nf,:f0,f0,:cos,cs_avg,:n0,n0_avg,:n1,n1_avg,:nr,nr_avg,:savg,savg,:err,wtest(x, zeroone),:lr,lr,:l2,l2,:stepsize,stepsize,:noise,noise))
     return f0
@@ -686,13 +688,15 @@ end
 # where g is the grad estimate and r is a similar sized random vector
 # Evaluate using them for steps and for gradient estimation
 
-function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, step=100.0)
+function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, step=10.0, maxnf=Inf, update=1)
     dg = similar(x)             # -step * g
     dr = similar(x)             # noise * step * (ng/nr) * randn
     dh = similar(x)             # dg + dr
+    dz = similar(x)
     xg = similar(x)             # x + dg
     xr = similar(x)             # x + dr
     xh = similar(x)             # x + dh
+    xz = similar(x)
     g0 = similar(x)             # real gradient from x
     fx = f(x,g0)
     ng0 = vecnorm(g0)
@@ -700,7 +704,7 @@ function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l
     ng = vecnorm(g)
     nr = sqrt(length(x))        # norm of randn
     dfg = dfr = dfh = 0.0
-    nf = nt = 0
+    nf = nt = cs = 0; np = 1
     
     while fx > ftol
         scale!(-step, copy!(dg,g))
@@ -711,6 +715,10 @@ function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l
         axpy!(1, dr, copy!(xr,x))
         fr = f(xr)
 
+        scale!(0.0001, randn!(dz))
+        axpy!(1, dz, copy!(xz,x))
+        fz = f(xz)
+
         axpy!(1, dr, copy!(dh,dg))
         axpy!(1, dh, copy!(xh,x))
         fh = f(xh)
@@ -720,27 +728,36 @@ function ego2b{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.1, lr=1.0, l
         dfr = (1-alpha)*dfr + alpha*(fr<fx)*(fr-fx)
         dfh = (1-alpha)*dfh + alpha*(fh<fx)*(fh-fx)
 
-        # Update gradient estimate based on xh
-        # fh2 = fx + CUBLAS.dot(g, dh)
-        # axpy!(-lr*(fh2-fh)/(vecnorm(dh)^2), dh, g)
-
-        # Update gradient estimate based on xr
-        fr2 = fx + CUBLAS.dot(g, dr)
-        axpy!(-lr*(fr2-fr)/(vecnorm(dr)^2), dr, g)
+        if update==1
+            fh2 = fx + CUBLAS.dot(g, dh)
+            axpy!(-lr*(fh2-fh)/(vecnorm(dh)^2), dh, g)
+        elseif update==2
+            fr2 = fx + CUBLAS.dot(g, dr)
+            axpy!(-lr*(fr2-fr)/(vecnorm(dr)^2), dr, g)
+        elseif update==3
+            fz2 = fx + CUBLAS.dot(g, dz)
+            axpy!(-lr*(fz2-fz)/(vecnorm(dz)^2), dz, g)
+        end
         ng = vecnorm(g)
 
         # Report
-        cs = CUBLAS.dot(g,g0)/(ng*ng0)
         nf += 1
-        (time()>=nt) && (println((nf,:fx,fx,:ng,ng,:ng0,ng0,:cos,cs,:dfg,dfg,:dfr,dfr,:dfh,dfh)); nt=10+time())
+        if (nf>=np) # (time()>=nt)
+            cs = CUBLAS.dot(g,g0)/(ng*ng0)
+            println((nf,:fx,fx,:ng,ng,:ng0,ng0,"ng/ng0",ng/ng0,:cos,cs,"sqrt(nf/nd)",sqrt(nf/length(x)),:dfg,dfg,:dfr,dfr,:dfh,dfh))
+            nt=10+time(); np*=2
+        end
 
-        # Update anchor point based on xg for now
+        # Update anchor point based on xg
         if fg < fx
             copy!(x, xg)
             fx = f(x, g0)
             ng0 = vecnorm(g0)
         end
+        nf >= maxnf && break
+        nf % 100 == 0 && gc()
     end
+    println((nf,:fx,fx,:ng,ng,:ng0,ng0,:cos,cs,:dfg,dfg,:dfr,dfr,:dfh,dfh))
 end
 
 # Make the step size (maybe later also the noise size) adaptive.
@@ -1253,4 +1270,151 @@ function ego8{T}(f::Function, x0::BaseVector{T}; ftol=0.05, rmin=1e-6, lr=1.0, n
     end
     println((nf,:favg,favg,:savg,savg,:gnorm,vecnorm(g),:step,step,:noise,noise,:lr,lr,:err,wtest(x0, zeroone)))
     return wtest(x0, softloss)
+end
+
+# This is back to batch version with separate grad update and point update steps:
+# Failed yet another time.  Cannot beat ego2 using twice as many evals.
+
+function ego9{T}(f::Function, x0::BaseVector{T}; ftol=0.05, rstep=0.0001, gstep=100.0, lr=0.1, maxnf=typemax(Int))
+    x = similar(x0)
+    d = similar(x0)
+    g = similar(x0)
+    fill!(g, 0)
+    f0 = f(x0)
+    dims = length(x0)
+    nf = np = 1
+    while f0 > ftol
+        # Update the gradient
+        axpy!(rstep, randn!(d), copy!(x,x0))            # dx = rstep * d
+        err = f0 + rstep * CUBLAS.dot(d,g) - f(x)       # fhat = f0 + g.dx
+        axpy!(-(lr*err)/(rstep*dims), d, g)             # g -= lr*err*dx/|dx|^2; |dx|=rstep*|d|=rstep*sqrt(dims)
+        # Update the point
+        axpy!(-gstep, g, copy!(x,x0))
+        fx = f(x)
+        if fx < f0
+            copy!(x0, x)
+            f0 = fx
+        end
+        (nf+=2)>=np && (np*=2;println((nf,:f0,f0,:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:err,wtest(x0, zeroone))))
+        nf >= maxnf && break
+    end
+    println((nf,:f0,f0,:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:err,wtest(x0, zeroone)))
+end
+
+# ego9 did not work.  Here is the simplified version of ego2 for comparison:
+
+function ego2c{T}(f::Function, x0::BaseVector{T}; ftol=0.05, noise=1.0, step=100.0, lr=1.0, maxnf=typemax(Int))
+    x = similar(x0)
+    d = similar(x0)
+    g = fill!(similar(x0),0)
+    gnorm = 0.0001                                      # lying for the first step to get nonzero vector
+    f0 = f(x0)
+    rnorm = sqrt(length(x0))
+    dnorm = 0; nf = np = 1
+    while f0 > ftol
+        axpy!(-step, g, scale!(noise*step*gnorm/rnorm, randn!(d)))
+        dnorm = vecnorm(d)
+        fx = f(axpy!(1, d, copy!(x,x0)))                # dx = -step*g + step*noise*(gnorm/rnorm)*r
+        err = f0 + CUBLAS.dot(d,g) - fx                 # fhat = f0 + g.dx
+        axpy!(-(lr*err)/(dnorm^2), d, g)                # g -= lr*err*dx/|dx|^2
+        gnorm = vecnorm(g)
+        if fx < f0
+            copy!(x0, x)
+            f0 = fx
+        end
+        (nf+=1)>=np && (np*=2;println((nf,:f0,f0,:gnorm,gnorm,:dnorm,dnorm,:step,step,:noise,noise,:lr,lr,:err,wtest(x0, zeroone))))
+        nf >= maxnf && break
+    end
+    println((nf,:f0,f0,:gnorm,gnorm,:dnorm,dnorm,:step,step,:noise,noise,:lr,lr,:err,wtest(x0, zeroone)))
+end
+
+# And this is ego2 adapted to minibatches
+
+function ego2mini{T}(f::Function, x0::BaseVector{T}; ftol=0.0, noise=1.0, step=100.0, lr=1.0, maxnf=typemax(Int))
+    x = similar(x0)
+    d = similar(x0)
+    g = fill!(similar(x0),0)
+    gnorm = 0
+    f0 = Inf
+    rnorm = sqrt(length(x0))
+    dnorm = nf = 0; np = 1
+    while f0 > ftol
+        axpy!(-step, g, scale!(noise*step*max(gnorm,.0001)/rnorm, randn!(d)))
+        dnorm = vecnorm(d)
+        axpy!(1, d, copy!(x,x0))                        # dx = -step*g + step*noise*(gnorm/rnorm)*r
+        (f0,fx) = f(x0,x)
+        err = f0 + CUBLAS.dot(d,g) - fx                 # fhat = f0 + g.dx
+        axpy!(-(lr*err)/(dnorm^2), d, g)                # g -= lr*err*dx/|dx|^2
+        gnorm = vecnorm(g)
+        if fx < f0
+            copy!(x0, x)
+            f0 = fx
+        end
+        (nf+=2)>=np && (np*=2;println((nf,:f0,wtest(x0,softloss),:gnorm,gnorm,:dnorm,dnorm,:step,step,:noise,noise,:lr,lr,:err,wtest(x0, zeroone))))
+        nf >= maxnf && break
+    end
+    println((nf,:f0,wtest(x0,softloss),:gnorm,gnorm,:dnorm,dnorm,:step,step,:noise,noise,:lr,lr,:err,wtest(x0, zeroone)))
+end
+
+# minibatch version of ego9
+
+function ego9mini{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gstep=100.0, lr=1.0, l2=0.1, maxnf=typemax(Int))
+    x1 = similar(x0)
+    x2 = similar(x0)
+    d = similar(x0)
+    g = similar(x0)
+    fill!(g, 0)
+    f0 = Inf
+    dims = length(x0)
+    nf = np = 1
+    while f0 > ftol
+        # Update the gradient
+        axpy!(rstep, randn!(d), copy!(x1,x0))           # dx = rstep * d
+        (f0,f1) = f(x0,x1)
+        err = f0 + rstep * CUBLAS.dot(d,g) - f1         # fhat = f0 + g.dx
+        l2!=0 && scale!(1-lr*l2, g)
+        axpy!(-(lr*err)/(rstep*dims), d, g)             # g -= lr*err*dx/|dx|^2; |dx|=rstep*|d|=rstep*sqrt(dims)
+        # Update the point
+        axpy!(-gstep, g, copy!(x2,x0))
+        (f0,f2) = f(x0,x2)
+        if f2 < f0
+            copy!(x0, x2)
+            f0 = f2
+        end
+        (nf+=1)>=np && (np*=2;println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone))))
+        nf >= maxnf && break
+    end
+    println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone)))
+end
+
+
+# Adaptive step size version of ego9mini
+
+function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gstep=100.0, lr=0.1, l2=0.1, maxnf=typemax(Int))
+    x1 = similar(x0)
+    x2 = similar(x0)
+    d = similar(x0)
+    g = similar(x0)
+    fill!(g, 0)
+    f0 = Inf
+    dims = length(x0)
+    nf = np = 1
+    while f0 > ftol
+        # Update the gradient
+        axpy!(rstep, randn!(d), copy!(x1,x0))           # dx = rstep * d
+        (f0,f1) = f(x0,x1)
+        err = f0 + rstep * CUBLAS.dot(d,g) - f1         # fhat = f0 + g.dx
+        l2!=0 && scale!(1-lr*l2, g)
+        axpy!(-(lr*err)/(rstep*dims), d, g)             # g -= lr*err*dx/|dx|^2; |dx|=rstep*|d|=rstep*sqrt(dims)
+        # Update the point
+        axpy!(-gstep, g, copy!(x2,x0))
+        (f0,f2) = f(x0,x2)
+        if f2 < f0
+            copy!(x0, x2)
+            f0 = f2
+        end
+        (nf+=1)>=np && (np*=2;println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone))))
+        nf >= maxnf && break
+    end
+    println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone)))
 end

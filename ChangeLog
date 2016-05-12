@@ -1,15 +1,54 @@
 2016-05-11  Deniz Yuret  <dyuret@ku.edu.tr>
 
+	* ego2mini: optimizing parameters at different starting points
+	going for 4096 steps.
+
+	xbuf	finit	noise	lr	step	ffin
+	3	2.2843	1.0	1.0	100.0	0.94
+	5	1.0131	1.0	0.1	100.0	0.74
+	7	0.3655	1.5	1.0	10.0	0.3546
+	8	0.2594	2.0	1.0	2.5	0.25909
+	9	0.17952	1.0	1.0	1.0	0.17950
+	10	.117595	1.0	1.0	0.5	.117591
+
+	It seems ego2mini, without a prior build-up of gradient info, is
+	hopeless in xbuf10.  However ego9mini does a bit better:
+
+	* ego9mini:
+	xbuf	finit	rstep	gstep	lr	f8192
+	10	.117595	0.0001	0.002	1.0	.117571
+
+	But if we go to 8196 it explodes.  Explosion always preceded by
+	gnorm increase above 0.1.  Can we use lower lr or l2 to keep gnorm
+	in check?  In ego2mini gnorm never goes above 0.005 but explosion
+	still occurs.  The following is with l2:
+
+	xbuf	finit	rstep	gstep	lr	l2	f8192	f81920
+	10	.117595	0.0001	0.4	1.0	0.1	.117554	.117036
+
+	1. Confirm ego2mini cannot handle xbuf10 and understand why.
+	2. Write adaptive step size version of ego9mini.  lr=1 and l2=0.1 can be kept constant.
+
 	* TODO:
 	- understand 2010 paper math, see if convergence can be	accelerated.
+
 	- pick out 5 starting points at different f0 (done: gd3save.jld) and see the optimum hypers for batch and minibatch.
+	ideal step size depends on the region.
+	note that the following experiments were done with gradient estimate starting from scratch.
+	At f=2.28->1.8691, step=100 does better. (xbuf[3])
+	At f=1.01->0.9092, step=10.0 does better. (xbuf[5])
+	At f=0.36->0.3521, step=500.0 does better. (xbuf[7])
 
 	- compare grad moves with grad+noise moves for batch and minibatch.  does noise have a benefit independent of helping estimate?
-	ego2b.out has the results.  It looks like sometimes random vector wins, sometimes gradient.
-	Trying the sum has the advantage of making progress when either one does.
+	ego2b3.out: Grad moves are almost always better, but not significantly.  The effect of noise on the grad+noise moves is minimal.
 
 	- compare using grad+noise vs noise for estimation. does grad+noise implement 2010 acceleration?
 	during static estimation, does not look like it.  gradest5 indicates random sampling still the best.
+	during optimization comparison suggests separate estimation.
+
+	- so ego2 was a good algorithm.  only computing grad+noise is good for x updates and best for estimation.
+	we have to figure out what goes out of whack during minibatching by using the different starting points.
+
 
 2016-05-10  Deniz Yuret  <dyuret@ku.edu.tr>
 
