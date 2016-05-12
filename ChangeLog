@@ -1,3 +1,25 @@
+2016-05-12  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* ego9ada: adaptive step size version of ego9mini.
+
+	* TODO:
+
+	- The grad+noise update has the advantage of growing or shrinking
+	the gradient size, so it may be more robust to step size
+	configuration.  We should find out why it doesn't work with
+	xbuf10.
+
+	- Step size does not make sense for first order models.  What are
+	we doing in the bayesian sense?  Are we modeling a very simple H?
+
+	- g controls how x is changing.  Instead of gradient calculation
+	we could update it with trial and error, particle filter style.
+	Try g and g'=g+r and continue with whichever does better.  But
+	then the same idea goes for r (or whatever transformation we apply
+	to g).  Instead of picking it completely randomly, we remember the
+	past and apply transformations that worked in the past.  x->x+g
+	makes sense, does g->g+r make sense or is it rather g->Hg?
+
 2016-05-11  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* ego2mini: optimizing parameters at different starting points
