@@ -20,6 +20,11 @@
 	past and apply transformations that worked in the past.  x->x+g
 	makes sense, does g->g+r make sense or is it rather g->Hg?
 
+	- why do we explode?  would it be better if we just use the
+	positive moves for gradient updating?  some wall in the wrong
+	direction may have a very negative effect on the gradient.  Or we
+	can cap the gradient updates.
+
 2016-05-11  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* ego2mini: optimizing parameters at different starting points

@@ -1390,7 +1390,7 @@ end
 
 # Adaptive step size version of ego9mini
 
-function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gstep=100.0, lr=1.0, l2=0.1, maxnf=typemax(Int))
+function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gstep=10.0, lr=1.0, l2=0.1, maxnf=typemax(Int))
     x1 = similar(x0)
     x2 = similar(x0)
     x3 = similar(x0)
@@ -1409,8 +1409,8 @@ function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gste
         axpy!(-(lr*err)/(rstep*dims), d, g)             # g -= lr*err*dx/|dx|^2; |dx|=rstep*|d|=rstep*sqrt(dims)
         # Update the step size
         axpy!(-gstep, g, copy!(x2,x0))
-        if nf%100 == 0
-            gstep2 = exp(0.2*(rand()-0.5))*gstep
+        if nf%100 == 0 && false #DBG
+            gstep2 = exp(rand()-0.5)*gstep
             axpy!(-gstep2, g, copy!(x3,x0))
             (f0,f2,f3) = f(x0,x2,x3)
             (f3 < f2) && (gstep = gstep2)
