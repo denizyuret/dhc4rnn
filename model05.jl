@@ -10,6 +10,10 @@ typealias BaseVector{T} BaseArray{T,1}
 if !isdefined(:MNIST)
     include(Pkg.dir("Knet/examples/mnist.jl"))
     mnist100 = minibatch(MNIST.xtrn, MNIST.ytrn, 100)
+    gpu_ytrn = CudaArray(MNIST.ytrn)
+    gpu_xtrn = CudaArray(MNIST.xtrn)
+    gpu_ytst = CudaArray(MNIST.ytst)
+    gpu_xtst = CudaArray(MNIST.xtst)
 end
 
 @knet function model02(x; winit=Gaussian(0,.1), hidden=64, f1=:relu, o...)
@@ -17,13 +21,14 @@ end
     return wf(h; out=10, f=:soft, winit=winit)
 end
 
-cosine(x,y)=CUBLAS.dot(x,y)/(vecnorm(x)*vecnorm(y))
+cosine(x::CudaArray,y::CudaArray)=CUBLAS.dot(x,y)/(vecnorm(x)*vecnorm(y))
+cosine(x,y)=dot(x,y)/(vecnorm(x)*vecnorm(y))
 setseed(42)
 gc()
-@gpu w64 = scale!(0.01, randn!(CudaArray(Float32, 794*64)))
-@gpu w32 = scale!(0.01, randn!(CudaArray(Float32, 794*32)))
-w64cpu = scale!(0.01, randn!(Array(Float32, 794*64)))
-w32cpu = scale!(0.01, randn!(Array(Float32, 794*32)))
+@gpu !isdefined(:w64) && (w64 = scale!(0.01, randn!(CudaArray(Float32, 794*64))))
+@gpu !isdefined(:w32) && (w32 = scale!(0.01, randn!(CudaArray(Float32, 794*32))))
+!isdefined(:w64cpu) && (w64cpu = scale!(0.01, randn!(Array(Float32, 794*64))))
+!isdefined(:w32cpu) && (w32cpu = scale!(0.01, randn!(Array(Float32, 794*32))))
 
 
 @gpu function initmodel{T}(w::CudaArray{T}, g=nothing; X=784, Y=10, H=div(length(w),X+Y), lr=0.5)
@@ -77,16 +82,17 @@ end
 #     return loss(ypred, y)
 # end
 
-gpu_ytrn = CudaArray(MNIST.ytrn)
-
-function weval(w, g=nothing; x=MNIST.xtrn, y=gpu_ytrn, loss=softloss)
+function weval(w, g=nothing; x=gpu_xtrn, y=gpu_ytrn, loss=softloss)
     f = initmodel(w, g)
     ypred = forw(f, x)
     g != nothing && back(f, y, loss)
     return loss(ypred, y)
 end
 
-function wtest(w, loss=softloss; x=MNIST.xtrn, y=gpu_ytrn)
+weval(w::Array;o...)=weval(CudaArray(w);o...)
+weval(w::Array,g::Array;o...)=(gg=CudaArray(g);f=weval(CudaArray(w),gg;o...);copy!(g,gg);f)
+
+function wtest(w, loss=softloss; x=gpu_xtrn, y=gpu_ytrn)
     f = initmodel(w)
     ypred = forw(f, x)
     return loss(ypred, y)
@@ -1144,7 +1150,7 @@ end
 
 using Knet: cslice!, csize
 
-function wmini(ws...; x=MNIST.xtrn, y=MNIST.ytrn, loss=softloss, batchsize=100)
+function wmini(ws...; x=gpu_xtrn, y=gpu_ytrn, loss=softloss, batchsize=100)
     global xmini, ymini
     if !isdefined(:xmini) || size(xmini)!=csize(x,batchsize)
         xmini = similar(x, csize(x, batchsize))
@@ -1426,4 +1432,43 @@ function ego9ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, rstep=0.0001, gste
         end
     end
     println((nf,:f0,wtest(x0,softloss),:gnorm,vecnorm(g),:gstep,gstep,:rstep,rstep,:lr,lr,:l2,l2,:err,wtest(x0, zeroone)))
+end
+
+function wsample(N=1; xdim=794*64, f=weval, gscale=0.8, ftol=0.05, xscale=1/sqrt(xdim), maxnf=Inf)
+    xbuf = Array(Float32, 0)
+    x = CudaArray(Float32, xdim)
+    g = CudaArray(Float32, xdim)
+    for n=1:N
+        scale!(xscale, randn!(x))
+        f0 = f(x, g)
+        nf = 1; np = 16
+        append!(xbuf, to_host(x)); println((nf,:f,f0,:x,vecnorm(x),:g,vecnorm(g)))
+        while f0 > ftol
+            f0 = f(axpy!(-gscale, g, x), g)
+            (nf+=1) >= np && (np*=2; append!(xbuf, to_host(x)); println((nf,:f,f0,:x,vecnorm(x),:g,vecnorm(g))))
+            nf % 100 == 0 && gc()
+            nf >= maxnf && break
+        end
+        append!(xbuf, to_host(x)); println((nf,:f,f0,:x,vecnorm(x),:g,vecnorm(g)))
+    end
+    return reshape(xbuf, (xdim, div(length(xbuf),xdim)))
+end
+
+function dik(w0,ws,wi)
+    ds = ws - w0; ns = vecnorm(ds)
+    di = wi - w0; ni = vecnorm(di)
+    cs = ni==0 ? 0 : dot(ds,di)/(ns*ni)
+    sn = 1-cs*cs
+    return (cs*ni, sn*ni)
+end
+
+function derivative(f,x,v; dx=0.01)
+    nv = vecnorm(v)
+    x1 = similar(x)
+    f0 = f(x)
+    println((0,f0,0))
+    for i=1:10
+        f1 = f(axpy!(dx*i/nv, v, copy!(x1,x)))
+        println((i,f1,f1-f0)); f0=f1
+    end
 end
