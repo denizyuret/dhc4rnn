@@ -1,7 +1,8 @@
 # implement dhc of degree n where n=0 means random search, n=1 means
 # use one previous direction etc.
 
-using Knet
+using Knet,JLD
+include("cheb.jl")
 @useifgpu CUDArt
 # using ProgressMeter: @showprogress, Progress, next!
 using Knet: Net, params, axpy!, copysync!, BaseArray
@@ -32,41 +33,45 @@ gc()
 
 
 @gpu function initmodel{T}(w::CudaArray{T}, g=nothing; X=784, Y=10, H=div(length(w),X+Y), lr=0.5)
-    global fmodel
-    if !isdefined(:fmodel)
-        fmodel = compile(:model02; hidden=H)
-        setp(fmodel, lr=lr)
-        forw(fmodel, zeros(T, X, 1))
-        back(fmodel, zeros(T, Y, 1), softloss)
+    global gpumodel
+    xgpu = Knet.gpu(); Knet.gpu(true)
+    if !isdefined(:gpumodel) || !isa(gpumodel, Knet.Net)
+        gpumodel = compile(:model02; hidden=H)
+        setp(gpumodel, lr=lr)
+        forw(gpumodel, zeros(T, X, 1))
+        back(gpumodel, zeros(T, Y, 1), softloss)
     end
-    fmodel.reg[2].out = fmodel.reg[2].out0 = CudaArray(w.ptr, (H,X), w.dev)
-    fmodel.reg[5].out = fmodel.reg[5].out0 = CudaArray(w.ptr+H*X*sizeof(T), (Y,H), w.dev)
+    gpumodel.reg[2].out = gpumodel.reg[2].out0 = CudaArray(w.ptr, (H,X), w.dev)
+    gpumodel.reg[5].out = gpumodel.reg[5].out0 = CudaArray(w.ptr+H*X*sizeof(T), (Y,H), w.dev)
     if g != nothing
-        fmodel.reg[2].dif = fmodel.reg[2].dif0 = CudaArray(g.ptr, (H,X), g.dev)
-        fmodel.reg[5].dif = fmodel.reg[5].dif0 = CudaArray(g.ptr+H*X*sizeof(T), (Y,H), g.dev)
+        gpumodel.reg[2].dif = gpumodel.reg[2].dif0 = CudaArray(g.ptr, (H,X), g.dev)
+        gpumodel.reg[5].dif = gpumodel.reg[5].dif0 = CudaArray(g.ptr+H*X*sizeof(T), (Y,H), g.dev)
     end
-    return fmodel
+    Knet.gpu(xgpu)
+    return gpumodel
 end
 
 submatrix(a, i, m, n)=pointer_to_array(pointer(a, i), (m, n))
 
 function initmodel{T}(w::Array{T}, g=nothing; X=784, Y=10, W=length(w), H=div(W,X+Y), lr=0.5)
-    global fmodel
-    if !isdefined(fmodel)
-        fmodel = compile(:model02; hidden=H)
-        setp(fmodel, lr=lr)
-        forw(fmodel, zeros(T, X, 1))
-        back(fmodel, zeros(T, Y, 1), softloss)
+    global cpumodel
+    xgpu=Knet.gpu(); Knet.gpu(false)
+    if !isdefined(:cpumodel) || !isa(cpumodel, Knet.Net)
+        cpumodel = compile(:model02; hidden=H)
+        setp(cpumodel, lr=lr)
+        forw(cpumodel, zeros(T, X, 1))
+        back(cpumodel, zeros(T, Y, 1), softloss)
     end
-    if pointer(w) != pointer(fmodel.reg[2].out0)
-        fmodel.reg[2].out = fmodel.reg[2].out0 = submatrix(w, 1, H, X) # CudaArray(w.ptr, (H,X), w.dev)
-        fmodel.reg[5].out = fmodel.reg[5].out0 = submatrix(w, 1+H*X, Y, H) # CudaArray(w.ptr+H*X*sizeof(T), (Y,H), w.dev)
+    if pointer(w) != pointer(cpumodel.reg[2].out0)
+        cpumodel.reg[2].out = cpumodel.reg[2].out0 = submatrix(w, 1, H, X) # CudaArray(w.ptr, (H,X), w.dev)
+        cpumodel.reg[5].out = cpumodel.reg[5].out0 = submatrix(w, 1+H*X, Y, H) # CudaArray(w.ptr+H*X*sizeof(T), (Y,H), w.dev)
     end
-    if g != nothing && pointer(g) != pointer(fmodel.reg[2].dif0)
-        fmodel.reg[2].dif = fmodel.reg[2].dif0 = submatrix(g, 1, H, X) # CudaArray(g.ptr, (H,X), g.dev)
-        fmodel.reg[5].dif = fmodel.reg[5].dif0 = submatrix(g, 1+H*X, Y, H) # CudaArray(g.ptr+H*X*sizeof(T), (Y,H), g.dev)
+    if g != nothing && pointer(g) != pointer(cpumodel.reg[2].dif0)
+        cpumodel.reg[2].dif = cpumodel.reg[2].dif0 = submatrix(g, 1, H, X) # CudaArray(g.ptr, (H,X), g.dev)
+        cpumodel.reg[5].dif = cpumodel.reg[5].dif0 = submatrix(g, 1+H*X, Y, H) # CudaArray(g.ptr+H*X*sizeof(T), (Y,H), g.dev)
     end
-    return fmodel
+    Knet.gpu(xgpu)
+    return cpumodel
 end
 
 # function wtest2(w, loss=softloss)
@@ -82,15 +87,18 @@ end
 #     return loss(ypred, y)
 # end
 
-function weval(w, g=nothing; x=gpu_xtrn, y=gpu_ytrn, loss=softloss)
+function weval(w, g=nothing; x=nothing, y=nothing, loss=softloss)
     f = initmodel(w, g)
     ypred = forw(f, x)
     g != nothing && back(f, y, loss)
     return loss(ypred, y)
 end
 
-weval(w::Array;o...)=weval(CudaArray(w);o...)
-weval(w::Array,g::Array;o...)=(gg=CudaArray(g);f=weval(CudaArray(w),gg;o...);copy!(g,gg);f)
+weval(w::Array,g=nothing)=(Knet.gpu(false);weval(w,g;x=MNIST.xtrn,y=MNIST.ytrn))
+weval(w::CudaArray,g=nothing)=(Knet.gpu(true);weval(w,g;x=gpu_xtrn,y=gpu_ytrn))
+
+# weval(w::Array;o...)=weval(CudaArray(w);o...)
+# weval(w::Array,g::Array;o...)=(gg=CudaArray(g);f=weval(CudaArray(w),gg;o...);copy!(g,gg);f)
 
 function wtest(w, loss=softloss; x=gpu_xtrn, y=gpu_ytrn)
     f = initmodel(w)
@@ -297,7 +305,7 @@ function dhc0{T}(f::Function, x::BaseVector{T}; grow=2.0, rmin=1e-5, rscale=0.05
     nf = np = 1
     while f0 > ftol
         f1 = f(axpy!(rscale, randn!(r), copy!(x,x0)))
-        if f1 < f0
+        if f1 <= f0
             f0 = f1
             copy!(x0, x)
             savg = (1-salpha)*savg + salpha
@@ -1309,16 +1317,16 @@ end
 
 # ego9 did not work.  Here is the simplified version of ego2 for comparison:
 
-function ego2c{T}(f::Function, x0::BaseVector{T}; ftol=0.05, noise=1.0, step=100.0, lr=1.0, maxnf=typemax(Int))
+function ego2c{T}(f::Function, x0::BaseVector{T}; ftol=0.05, noise=1.0, step=100.0, lr=1.0, gmin=0.1, maxnf=typemax(Int))
     x = similar(x0)
     d = similar(x0)
     g = fill!(similar(x0),0)
-    gnorm = 0.0001                                      # lying for the first step to get nonzero vector
+    gnorm = 0.0
     f0 = f(x0)
     rnorm = sqrt(length(x0))
     dnorm = 0; nf = np = 1
     while f0 > ftol
-        axpy!(-step, g, scale!(noise*step*gnorm/rnorm, randn!(d)))
+        axpy!(-step, g, scale!(noise*step*max(gmin,gnorm)/rnorm, randn!(d)))
         dnorm = vecnorm(d)
         fx = f(axpy!(1, d, copy!(x,x0)))                # dx = -step*g + step*noise*(gnorm/rnorm)*r
         err = f0 + CUBLAS.dot(d,g) - fx                 # fhat = f0 + g.dx
@@ -1471,4 +1479,44 @@ function derivative(f,x,v; dx=0.01)
         f1 = f(axpy!(dx*i/nv, v, copy!(x1,x)))
         println((i,f1,f1-f0)); f0=f1
     end
+end
+
+# Approximate the second derivative in direction d from x for function
+# f.
+
+if !isdefined(:wsample_jld) || !isa(wsample_jld,Dict)
+    wsample_jld = load("wsample.jld")
+    x5cpu = wsample_jld["x"][:,5]; x5gpu = CudaArray(x5cpu)
+    x9cpu = wsample_jld["x"][:,9]; x9gpu = CudaArray(x9cpu)
+    d5cpu = axpy!(-1, x5cpu, copy(x9cpu)); d5gpu = CudaArray(d5cpu)
+    t5cpu = similar(x5cpu); t5gpu = CudaArray(t5cpu)
+end
+
+function deriv1(d::CudaArray; x=x5gpu, t=t5gpu, f=weval, n=5, a=-0.1, b=0.1)
+    f0 = chebft(s->f(axpy!(s/vecnorm(d),d,copy!(t,x))); n=n, a=a, b=b)
+    f1 = chder(f0; n=n, a=a, b=b)
+    chebev(f1,0.0; n=n, a=a, b=b)
+end
+
+function deriv2(d::CudaArray; x=x5gpu, t=t5gpu, f=weval, n=5, a=-0.1, b=0.1)
+    f0 = chebft(s->f(axpy!(s/vecnorm(d),d,copy!(t,x))); n=n, a=a, b=b)
+    f1 = chder(f0; n=n, a=a, b=b)
+    f2 = chder(f1; n=n, a=a, b=b)
+    chebev(f2,0.0; n=n, a=a, b=b)
+end
+
+function deriv2(d::Array; x=x5cpu, t=t5cpu, f=weval, n=5, a=-0.1, b=0.1)
+    f0 = chebft(s->f(axpy!(s/vecnorm(d),d,copy!(t,x))); n=n, a=a, b=b)
+    f1 = chder(f0; n=n, a=a, b=b)
+    f2 = chder(f1; n=n, a=a, b=b)
+    chebev(f2,0.0; n=n, a=a, b=b)
+end
+
+function deltaf(d::CudaArray; x=x5gpu, t=t5gpu, f=weval, n=5, a=-0.1, b=0.1)
+    f0 = chebft(s->f(axpy!(s/vecnorm(d),d,copy!(t,x))); n=n, a=a, b=b)
+    f1 = chder(f0; n=n, a=a, b=b)
+    f2 = chder(f1; n=n, a=a, b=b)
+    d1 = chebev(f1,0.0; n=n, a=a, b=b)
+    d2 = chebev(f2,0.0; n=n, a=a, b=b)
+    -d1^2/d2
 end
