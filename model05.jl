@@ -1486,8 +1486,10 @@ end
 
 if !isdefined(:wsample_jld) || !isa(wsample_jld,Dict)
     wsample_jld = load("wsample.jld")
+    x1cpu = wsample_jld["x"][:,1]; x1gpu = CudaArray(x1cpu)
     x5cpu = wsample_jld["x"][:,5]; x5gpu = CudaArray(x5cpu)
     x9cpu = wsample_jld["x"][:,9]; x9gpu = CudaArray(x9cpu)
+    d1cpu = axpy!(-1, x1cpu, copy(x9cpu)); d1gpu = CudaArray(d1cpu)
     d5cpu = axpy!(-1, x5cpu, copy(x9cpu)); d5gpu = CudaArray(d5cpu)
     t5cpu = similar(x5cpu); t5gpu = CudaArray(t5cpu)
 end
@@ -1519,4 +1521,63 @@ function deltaf(d::CudaArray; x=x5gpu, t=t5gpu, f=weval, n=5, a=-0.1, b=0.1)
     d1 = chebev(f1,0.0; n=n, a=a, b=b)
     d2 = chebev(f2,0.0; n=n, a=a, b=b)
     -d1^2/d2
+end
+
+normalize(x)=scale!(1/vecnorm(x),x)
+
+function deriv12{T}(f::Function, x::CudaArray{T}, d::CudaArray{T}; n=5, a=-0.1, b=0.1, dnorm=vecnorm(d))
+    global deriv12tmp
+    if !isdefined(:_deriv12tmp) || !issimilar(deriv12tmp,x)
+        deriv12tmp = similar(x)
+    end
+    f0 = chebft(s->f(axpy!(s/dnorm,d,copy!(deriv12tmp,x))); n=n, a=a, b=b)
+    f1 = chder(f0; n=n, a=a, b=b)
+    f2 = chder(f1; n=n, a=a, b=b)
+    map(T, (chebev(f1,0.0; n=n, a=a, b=b),
+            chebev(f2,0.0; n=n, a=a, b=b)))
+end
+
+# x0 is our best point, u our best direction (unit vector) so far,
+# u1 and u2 are the first and second derivatives in the u direction.
+# Try direction v = u + noise
+
+# If u2 is underestimated, u1^2/u2 will be larger than f0.  We know
+# minf=0 so we can correct u1^2/u2 < f0; u1^2/f0 < u2; set
+# u2=max(u2,u1^2/f0).  If the limit is hit, step size will be u1/u2 =
+# u1/(u1^2/f0) = f0/u1.
+
+function enewton1{T}(f::Function, x0::BaseVector{T}; ftol=0.05, maxnf=typemax(Int), dt=3600, noise=1.0)
+    f0 = f1 = f(x0)
+    n0 = vecnorm(x0)
+    x = similar(x0)
+    v = similar(x0)
+    u = normalize(randn!(similar(x0)))
+    u1 = u2 = 0
+    nf = np = nt = 1
+    nv = 1/sqrt(length(x0))
+    while true
+        normalize(axpy!(1, u, scale!(noise/nv, randn!(v))))
+        (u1,u2) = deriv12(f, x0, u, dnorm=1.0)
+        (v1,v2) = deriv12(f, x0, v, dnorm=1.0)
+        if ((v2 < 0 && v2 < u2) ||
+            (u2 > 0 && v2 > 0 && v1*v1/v2 > u1*u1/u2))
+            copy!(u,v); (u1,u2) = (v1,v2)
+        end
+        if u2 < 0 || u1*u1/u2 > f0
+            dx = -f0/u1; df = -f0
+        else
+            dx = -u1/u2; df = -u1*u1/u2
+        end
+        abs(dx) > 0.1*n0 && (dx = T(sign(dx)*0.1*n0))
+        f1 = f(axpy!(dx, u, copy!(x,x0))); nf+=1
+        nf % 100 == 0 && gc()
+        if nf >= np || time() >= nt || nf >= maxnf || f0 <= ftol
+            println((nf,:f0,f0,:x0,n0,:u1,u1,:u2,u2,:dx,dx,:df,df,f1-f0,:err,T(wtest(x0, zeroone))))
+            nf >= np && (np *= 2); nt = dt+time()
+            (nf >= maxnf || f0 <= ftol) && break
+        end
+        if f1 < f0
+            copy!(x0,x); f0 = f1; n0 = vecnorm(x0)
+        end
+    end
 end

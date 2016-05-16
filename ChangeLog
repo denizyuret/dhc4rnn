@@ -1,5 +1,18 @@
 2016-05-16  Deniz Yuret  <dyuret@ku.edu.tr>
 
+	* enewton1: First try at trying to predict the newton direction.
+	Step sizes determined by derivative estimates.  Slightly worse
+	than ego2.  u2 (the second derivative) never goes below 0.001
+	after the initial phase.  For x5 we have:
+
+	julia> deriv12(weval, x5gpu, d5gpu)
+	(-0.022166235f0,0.00053873187f0)
+
+	So u2=0.001 is ok.  But it cannot find directions with large u1.
+	Maybe play with noise?  Does not have a significant effect.
+	Instead of random search for a good direction, we need to estimate
+	the newton direction and make corrections to it.
+
 	* deltaf: It takes ~10K steps to find a direction that is as good as d5 (deltaf(d5)=-0.91).
 	julia> ego2c(deltaf, copy!(r,randn!(r5gpu)); ftol=-10,gmin=1e-4,step=1e7)
 	(2,:f0,-0.0020427369611576126,:gnorm,1.7468734f-6,:dnorm,1000.15985f0,:step,1.0e7,:noise,1.0,:lr,1.0,:err,0.9036666666666666)
