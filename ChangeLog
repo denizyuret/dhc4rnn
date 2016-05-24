@@ -1,3 +1,26 @@
+2016-05-24  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* weval100: experiments low dimensional subspaces.  run gd3 in a
+	subspace and report dimensionality vs best loss.
+
+	ndims	loss@4096
+	0	2.3026
+	10	2.2129
+	100	1.1095
+	1000	0.2309
+	10000	0.0207
+	50816	0.0025
+
+2016-05-23  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* lowdim: Can we optimize on a low dimensional subspace, and how
+	close would this get us to the true optimum?  GD converges in 1000
+	steps, so it only explores at most a 1000-D subspace of 50K dims.
+	If we knew the direction of the solution we can trivially find it
+	exploring a 1-D subspace, so maybe this is not too surprizing.  If
+	we picked any random 1K subspace, could we reach values close
+	enough to the optimum?
+
 2016-05-16  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* enewton1: First try at trying to predict the newton direction.

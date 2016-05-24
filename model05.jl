@@ -97,6 +97,24 @@ end
 weval(w::Array,g=nothing)=(Knet.gpu(false);weval(w,g;x=MNIST.xtrn,y=MNIST.ytrn))
 weval(w::CudaArray,g=nothing)=(Knet.gpu(true);weval(w,g;x=gpu_xtrn,y=gpu_ytrn))
 
+function weval100(w, g=nothing)
+    global _weval1, _weval2, _weval3
+    dims = (794*64, length(w))
+    if !isdefined(:_weval1) || size(_weval1) != dims
+        _weval1 = scale!(1/sqrt(dims[1]), randn!(similar(w, dims)))
+        _weval2 = similar(w, (dims[1],))
+        _weval3 = similar(w, (dims[1],))
+    end
+    A_mul_B!(_weval2, _weval1, w)
+    if g == nothing
+        return weval(_weval2)
+    else
+        val = weval(_weval2, _weval3)
+        At_mul_B!(g, _weval1, _weval3)
+        return val
+    end
+end
+
 # weval(w::Array;o...)=weval(CudaArray(w);o...)
 # weval(w::Array,g::Array;o...)=(gg=CudaArray(g);f=weval(CudaArray(w),gg;o...);copy!(g,gg);f)
 
@@ -560,7 +578,7 @@ function gd3{T}(f::Function, x::BaseVector{T}; gscale=1.5, ftol=0.05, alpha=0.01
         cs_avg = (1-alpha)*cs_avg + alpha * cs
         
         if (nf+=1) >= np
-            println((nf,:lr,lr,:l2,l2,:cs,cs_avg,:n0,n0_avg,:n1,n1_avg,:f0,f0,:gscale,gscale,:savg,savg,:gavg,gavg,:err,wtest(x, zeroone)))
+            println((nf,:lr,lr,:l2,l2,:cs,cs_avg,:n0,n0_avg,:n1,n1_avg,:f0,f0,:gscale,gscale,:savg,savg,:gavg,gavg)) # ,:err,wtest(x, zeroone)))
             np *= 2
         end
         if nf % 1000 == 0
@@ -568,7 +586,7 @@ function gd3{T}(f::Function, x::BaseVector{T}; gscale=1.5, ftol=0.05, alpha=0.01
             # println((:mem, Knet.gpumem(), :gc, (gc();gpusync();Knet.gpumem())))
         end
     end
-    println((nf,:lr,lr,:l2,l2,:cs,cs_avg,:n0,n0_avg,:n1,n1_avg,:f0,f0,:gscale,gscale,:savg,savg,:gavg,gavg,:err,wtest(x, zeroone)))
+    println((nf,:lr,lr,:l2,l2,:cs,cs_avg,:n0,n0_avg,:n1,n1_avg,:f0,f0,:gscale,gscale,:savg,savg,:gavg,gavg)) # ,:err,wtest(x, zeroone)))
     return f0
 end
 
@@ -615,6 +633,55 @@ function gd3save{T}(f::Function, x::BaseVector{T}; gscale=0.75, ftol=0.05, alpha
     end
     println((nf,:f0,f0,:savg,savg,:gavg,gavg,:err,wtest(x, zeroone))); push!(xbuf,copy(x))
     return xbuf
+end
+
+# gradient descent without all the bells and whistles
+function gd3simple{T}(f::Function, x0::BaseVector{T}; gscale=1.0, ftol=0.05, maxnf=typemax(Int), dt=10)
+    g0 = similar(x0)
+    f0 = f(x0, g0)
+    nf = np = nt = 1
+    while f0 > ftol
+        f0 = f(axpy!(-gscale, g0, x0), g0)
+        if (nf+=1) >= np || time() >= nt
+            println((nf,:f0,f0,:g0,vecnorm(g0),:x0,vecnorm(x0)))
+            nf >= np && (np *= 2)
+            time() >= nt && (nt = time()+dt)
+            nf >= maxnf && break
+            gc()
+        end
+    end
+    println((nf,:f0,f0,:g0,vecnorm(g0),:x0,vecnorm(x0)))
+    return f0
+end
+
+# gradient descent with adaptive step size
+function gd3ada{T}(f::Function, x0::BaseVector{T}; ftol=0.0, maxnf=typemax(Int), dt=10, gmax=1.0)
+    g0,x = [ similar(x0) for i=1:2 ]
+    @show f0 = f(x0, g0)
+    nf = np = nt = nu = 1
+    nx,ng = vecnorm(x0),vecnorm(g0)
+    gscale = lr = gmax/ng
+    while f0 > ftol
+        gscale = min(lr, gmax/ng)
+        f0 = f(axpy!(-gscale, g0, x0), g0); nf += 1
+        nx,ng = vecnorm(x0),vecnorm(g0)
+        if nf >= nu
+            f1 = f(axpy!(-lr,  g0, copy!(x,x0)))
+            lr2 = lr * exp(rand()-1/2)
+            f2 = f(axpy!(-lr2, g0, copy!(x,x0)))
+            f2 < f1 && (lr = lr2)
+            nu = min(nu*1.2,nu+50)
+        end
+        if nf >= np || time() >= nt
+            println((nf,:f0,f0,:g0,ng,:x0,nx,:lr,lr,:gs,gscale))
+            gc()
+            nf >= maxnf && break
+            nt = time()+dt
+            nf >= np && (np *= 2)
+        end
+    end
+    println((nf,:f0,f0,:g0,ng,:x0,nx,:lr,lr,:gs,gscale))
+    return f0
 end
 
 function ego2{T}(f::Function, x::BaseVector{T}; ftol=0.05, alpha=0.01, lr=1.0, l2=0.0, noise=1.0, rmin=1e-6, stepsize=100.0, maxnf=Inf)
